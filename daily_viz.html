@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Visualization Prompt</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+      background:#F5FBF7;
+      padding:20px;
+      /* no 100vh to avoid tall iframes in Notion */
+    }
+    .viz-prompt-card{
+      background:#EAF7F0;
+      border:1px solid #D8F1E3;
+      border-radius:16px;
+      padding:24px;
+      max-width:640px;
+      min-width:280px;
+      width:100%;
+      margin:0 auto;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      text-align:center;
+      color:#2E5E4E;
+    }
+    .card-header{
+      display:flex;justify-content:space-between;align-items:flex-start;
+      width:100%;margin-bottom:24px
+    }
+    .card-title{
+      font-size:14px;font-weight:600;color:#2E5E4E;text-transform:uppercase;
+      letter-spacing:.02em;opacity:.85
+    }
+    .copy-button{
+      background:transparent;border:none;color:#2E5E4E;cursor:pointer;
+      padding:8px;border-radius:8px;opacity:.7;transition:background .2s,opacity .2s;
+      width:32px;height:32px;display:flex;align-items:center;justify-content:center
+    }
+    .copy-button:hover{opacity:1;background:#D8F1E3}
+    .copy-button:focus-visible{outline:2px solid #2E5E4E;outline-offset:2px;opacity:1}
+    .copy-button svg{width:16px;height:16px}
+    .prompt-text{
+      font-size:20px;font-weight:600;color:#2E5E4E;line-height:1.45;margin-bottom:24px;
+      display:flex;align-items:center;min-height:2.2em;text-align:center
+    }
+    .card-footer{display:flex;justify-content:flex-end;width:100%}
+    .daily-chip{
+      background:#C7EBD7;color:#2E5E4E;font-size:12px;font-weight:600;
+      padding:4px 12px;border-radius:12px;opacity:.8
+    }
+    .copy-confirmation{
+      position:absolute;top:16px;right:52px;background:#8FD9B4;color:#2E5E4E;
+      font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;
+      opacity:0;transform:translateY(-8px);transition:opacity .25s,transform .25s;
+      pointer-events:none
+    }
+    .copy-confirmation.show{opacity:1;transform:translateY(0)}
+    @media (max-width:480px){
+      body{padding:16px}
+      .viz-prompt-card{padding:20px}
+      .prompt-text{font-size:18px;margin-bottom:20px}
+      .card-header{margin-bottom:20px}
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{animation:none!important;transition:none!important}
+    }
+  </style>
+</head>
+<body>
+  <section class="viz-prompt-card" role="region" aria-label="Daily Visualization Prompt">
+    <div class="card-header">
+      <h2 class="card-title">Today's Visualization</h2>
+      <button class="copy-button" type="button" title="Copy visualization to clipboard" aria-label="Copy visualization to clipboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="copy-confirmation" aria-live="polite">Copied</div>
+
+    <p id="promptText" class="prompt-text" role="status" aria-live="polite">Loading your daily visualization...</p>
+
+    <div class="card-footer">
+      <span class="daily-chip">changes daily</span>
+    </div>
+  </section>
+
+  <script>
+    // Visualization prompts
+    const VISUALIZATION_PROMPTS = [
+      "Visualize your signature on the final agreement.",
+      "See yourself breathing calmly and smiling after completion.",
+      "Picture the notification of good news on your phone.",
+      "Visualize handing over the finished work with confidence.",
+      "See the exact number you intend to hit on your goal tracker.",
+      "Picture the supportive message you receive from a mentor.",
+      "Visualize waking up energized and ready to act.",
+      "Picture the grateful face of someone you helped.",
+      "Visualize celebrating a small win this evening.",
+      "See yourself opening the door to your ideal opportunity.",
+      "Picture your hands steady and sure during the important moment.",
+      "Visualize the feeling of relief washing over you at completion.",
+      "See the approving nod from someone whose opinion matters.",
+      "Picture yourself walking confidently into the room.",
+      "Visualize the exact words you want to hear today.",
+      "See your reflection looking proud and accomplished.",
+      "Picture the weight lifting off your shoulders.",
+      "Visualize crossing the finish line with energy to spare.",
+      "See yourself saying 'yes' with complete certainty.",
+      "Picture the successful outcome already achieved.",
+      "Visualize your future self thanking you for today's action.",
+      "See the domino effect of positive change you're creating.",
+      "Picture yourself as the calm center in any storm today.",
+      "Visualize the problem becoming smaller as you approach it.",
+      "See the path forward illuminated clearly before you.",
+      "Picture yourself moving with purpose and clarity.",
+      "Visualize the breakthrough moment arriving right on time.",
+      "See the support you need appearing exactly when needed.",
+      "Picture your intuition guiding you to the right choice.",
+      "Visualize abundance flowing into your life effortlessly.",
+      "See yourself surrounded by the right people today.",
+      "Picture the door opening that was meant to open for you.",
+      "Visualize your energy attracting what you truly desire.",
+      "See the solution arising from your patient persistence.",
+      "Picture yourself speaking your truth with gentle strength.",
+      "Visualize the perfect timing of today's events unfolding.",
+      "See yourself responding rather than reacting to challenges.",
+      "Picture the resources you need becoming readily available.",
+      "Visualize your contribution making a meaningful difference.",
+      "See yourself learning something valuable from today.",
+      "Picture the foundation you're building growing stronger.",
+      "Visualize your skills expanding through today's experience.",
+      "See yourself choosing progress over perfection.",
+      "Picture the unexpected gift hidden in today's tasks.",
+      "Visualize your presence bringing comfort to someone else.",
+      "See yourself aligned with your highest priorities today.",
+      "Picture the momentum building with each positive action.",
+      "Visualize your inner wisdom speaking louder than fear.",
+      "See yourself creating exactly what's needed right now.",
+      "Picture the seeds you plant today blooming in perfect time.",
+      "Visualize your unique talents being recognized and valued.",
+      "See yourself moving forward with graceful determination.",
+      "Picture the balance you seek naturally falling into place.",
+      "Visualize your creativity flowing freely and purposefully.",
+      "See yourself embracing change as your greatest teacher.",
+      "Picture the community you belong to welcoming you warmly.",
+      "Visualize your efforts compounding into lasting success.",
+      "See yourself finding joy in the process, not just outcomes.",
+      "Picture your resilience growing stronger with each challenge.",
+      "Visualize the legacy you're building through daily choices.",
+      "See yourself as both student and teacher in today's lessons.",
+      "Picture your authentic self shining through in all interactions.",
+      "Visualize the ripple effects of your kindness spreading far.",
+      "See yourself trusting the journey even when the path curves.",
+      "Picture your inner strength surprising you with its depth.",
+      "Visualize the perfect balance of effort and ease today.",
+      "See yourself celebrating the small victories along the way.",
+      "Picture your presence alone making situations better.",
+      "Visualize the right opportunities recognizing you first.",
+      "See yourself as the author of your own comeback story.",
+      "Picture the healing happening in areas you thought were stuck.",
+      "Visualize your perspective shifting to reveal hidden blessings.",
+      "See yourself attracting mentors and guides when you need them.",
+      "Picture your boundaries protecting your energy beautifully.",
+      "Visualize the confidence you need flowing through you naturally.",
+      "See yourself turning obstacles into stepping stones today.",
+      "Picture your heart opening to receive what's meant for you.",
+      "Visualize the synchronicities that confirm you're on track.",
+      "See yourself embodying the change you wish to see.",
+      "Picture your actions today planting seeds for tomorrow's harvest.",
+      "Visualize the perfect words arriving just when you need them.",
+      "See yourself dancing gracefully with uncertainty and possibility."
+    ];
+
+    function hashString(str){
+      let h=0; for(let i=0;i<str.length;i++){ h=((h<<5)-h)+str.charCodeAt(i); h|=0; }
+      return Math.abs(h);
+    }
+    function todayKey(){
+      const d=new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    }
+    function getDailyPromptIndex(){
+      const key=todayKey(), storageKey='viz_prompt_v1';
+      try{
+        const stored=localStorage.getItem(storageKey);
+        if(stored){
+          const data=JSON.parse(stored);
+          if(data.keyDay===key) return data.idx;
+        }
+      }catch(e){}
+      const idx = hashString(key) % VISUALIZATION_PROMPTS.length;
+      try{ localStorage.setItem(storageKey, JSON.stringify({keyDay:key, idx})); }catch(e){}
+      return idx;
+    }
+    async function copyToClipboard(text){
+      try{
+        if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(text); }
+        else{
+          const ta=document.createElement('textarea');
+          ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta);
+          ta.focus(); ta.select(); document.execCommand('copy'); ta.remove();
+        }
+        const c=document.querySelector('.copy-confirmation');
+        c.classList.add('show'); setTimeout(()=>c.classList.remove('show'), 1600);
+      }catch(e){ /* silent */ }
+    }
+    function initWidget(){
+      const idx=getDailyPromptIndex();
+      const daily=VISUALIZATION_PROMPTS[idx];
+      const el=document.getElementById('promptText');
+      el.textContent=daily;
+      const btn=document.querySelector('.copy-button');
+      btn.addEventListener('click', ()=>copyToClipboard(daily));
+      btn.addEventListener('keydown', e=>{
+        if(e.key==='Enter' || e.key===' '){ e.preventDefault(); copyToClipboard(daily); }
+      });
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initWidget); else initWidget();
+  </script>
+</body>
+</html>

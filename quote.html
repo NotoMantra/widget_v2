@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Clean Wellness Widget — Green</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      padding:20px;
+      background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);
+      color:#065f46;display:flex;align-items:center;justify-content:center;
+    }
+    .wellness-widget{
+      max-width:550px;width:100%;
+      background:linear-gradient(145deg,#fff 0%,#f8fffe 100%);
+      border:1px solid rgba(34,197,94,.12);border-radius:24px;padding:36px;
+      box-shadow:0 4px 20px rgba(22,163,74,.08),0 1px 3px rgba(0,0,0,.02);
+      position:relative;overflow:hidden;
+    }
+    .wellness-widget::before{
+      content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(34,197,94,.06),transparent);
+      animation:shimmer 4s infinite;
+    }
+    .header{text-align:center;margin-bottom:32px;position:relative;z-index:1}
+    .main-title{font-size:24px;font-weight:700;color:#065f46;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:12px}
+    .icon{width:28px;height:28px;fill:#16a34a}
+    .date-display{font-size:16px;color:#059669;font-weight:600}
+    .affirmation-section{margin-bottom:36px;position:relative;z-index:1}
+    .affirmation-text{
+      font-size:22px;font-weight:600;color:#065f46;line-height:1.6;text-align:center;
+      padding:32px 28px;border-radius:20px;
+      background:linear-gradient(135deg,rgba(34,197,94,.06) 0%,rgba(16,185,129,.04) 100%);
+      border:1px solid rgba(34,197,94,.1);min-height:120px;display:flex;align-items:center;justify-content:center;
+    }
+    .mood-title{font-size:18px;font-weight:700;color:#065f46;margin:0 0 14px 0;text-align:center}
+    .mood-group{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+    .mood-pill{
+      appearance:none;border:2px solid rgba(34,197,94,.25);background:#fff;color:#065f46;
+      padding:10px 14px;border-radius:999px;font-weight:700;cursor:pointer;
+      transition:background .2s,border-color .2s,transform .2s;
+    }
+    .mood-pill:hover{transform:translateY(-1px);border-color:#22c55e;background:rgba(34,197,94,.06)}
+    .mood-pill[aria-checked="true"]{background:#22c55e;border-color:#16a34a;color:#fff}
+    .mood-feedback{
+      text-align:center;margin-top:16px;padding:12px 14px;background:rgba(34,197,94,.06);
+      border-radius:12px;font-size:14px;color:#059669;font-weight:600;border:1px solid rgba(34,197,94,.1);
+      opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;
+    }
+    .mood-feedback.show{opacity:1;transform:translateY(0)}
+    @keyframes shimmer{0%{left:-100%}50%,100%{left:100%}}
+    @media(max-width:768px){
+      .wellness-widget{padding:28px 24px}.main-title{font-size:22px}
+      .affirmation-text{font-size:20px;padding:28px 24px;min-height:100px}
+    }
+    @media(max-width:480px){
+      body{padding:16px}.wellness-widget{padding:24px 20px}.main-title{font-size:20px}
+      .affirmation-text{font-size:18px;padding:24px 20px;min-height:90px}
+    }
+    @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <div class="wellness-widget" role="application" aria-label="Daily Inspiration">
+    <div class="header">
+      <div class="main-title">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77 5.82 21.9 7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        Daily Inspiration
+      </div>
+      <div id="dateDisplay" class="date-display">Today</div>
+    </div>
+
+    <div class="affirmation-section">
+      <div id="affirmationText" class="affirmation-text" role="status" aria-live="polite">
+        Loading your daily inspiration...
+      </div>
+    </div>
+
+    <!-- Clear, text-labeled mood selector -->
+    <section class="mood-section" aria-labelledby="moodLabel">
+      <h2 id="moodLabel" class="mood-title">How are you feeling today?</h2>
+      <div id="moodGroup" class="mood-group" role="radiogroup" aria-label="Mood">
+        <button class="mood-pill" role="radio" aria-checked="false" data-mood="stressed" title="Stressed">Stressed</button>
+        <button class="mood-pill" role="radio" aria-checked="false" data-mood="tired"    title="Tired">Tired</button>
+        <button class="mood-pill" role="radio" aria-checked="false" data-mood="ok"       title="OK">OK</button>
+        <button class="mood-pill" role="radio" aria-checked="false" data-mood="calm"     title="Calm">Calm</button>
+        <button class="mood-pill" role="radio" aria-checked="false" data-mood="focused"  title="Focused">Focused</button>
+      </div>
+      <div id="moodFeedback" class="mood-feedback" role="status" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <script>
+    // Affirmations (same as before; trimmed for brevity — keep your full list)
+    const affirmations = [
+      "I am worthy of love and respect","Every challenge is an opportunity to grow",
+      "I choose peace and positivity today","My potential is limitless","I am grateful for this moment",
+      "I trust in my ability to overcome obstacles","Today brings new possibilities","I am confident in my unique journey",
+      "I radiate kindness and compassion","I embrace change as a path to growth"
+    ];
+
+    const MOOD_KEY = "wellness_mood_v2";
+    const AFFIRM_KEY = "affirm_day_v1";
+
+    const moodMsgs = {
+      stressed: "Noted. Breathe 4x slow cycles. Keep tasks small.",
+      tired:    "Understood. Lower intensity and hydrate.",
+      ok:       "Okay. One meaningful action is enough.",
+      calm:     "Good. Protect focus blocks and move steadily.",
+      focused:  "Great. Tackle the hardest task first."
+    };
+
+    function todayKey(){
+      const d=new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    }
+    function hash(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return Math.abs(h);}
+
+    function dailyAffirmation(){
+      const key=todayKey();
+      try{
+        const saved=JSON.parse(localStorage.getItem(AFFIRM_KEY)||"{}");
+        if(saved.key===key) return affirmations[saved.idx]||affirmations[0];
+        const idx = hash(key)%affirmations.length;
+        localStorage.setItem(AFFIRM_KEY, JSON.stringify({key,idx}));
+        return affirmations[idx];
+      }catch(e){
+        const idx = hash(key)%affirmations.length;
+        return affirmations[idx];
+      }
+    }
+
+    function init(){
+      document.getElementById("dateDisplay").textContent =
+        new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+      document.getElementById("affirmationText").textContent = dailyAffirmation();
+
+      const group = document.getElementById("moodGroup");
+      const feedback = document.getElementById("moodFeedback");
+      const buttons = Array.from(group.querySelectorAll('[role="radio"]'));
+
+      // Restore saved mood
+      const saved = localStorage.getItem(MOOD_KEY);
+      if(saved){ setChecked(saved); showMsg(saved); }
+
+      // Mouse + keyboard interactions
+      buttons.forEach((btn, idx)=>{
+        btn.addEventListener("click", ()=>{ choose(btn.dataset.mood); btn.focus(); });
+        btn.addEventListener("keydown", e=>{
+          const k=e.key;
+          if(k===" "||k==="Enter"){ e.preventDefault(); choose(btn.dataset.mood); }
+          if(k==="ArrowRight"||k==="ArrowDown"){ e.preventDefault(); buttons[(idx+1)%buttons.length].focus(); }
+          if(k==="ArrowLeft"||k==="ArrowUp"){ e.preventDefault(); buttons[(idx-1+buttons.length)%buttons.length].focus(); }
+        });
+      });
+
+      function choose(mood){
+        setChecked(mood);
+        showMsg(mood);
+        try{ localStorage.setItem(MOOD_KEY, mood); }catch(e){}
+      }
+      function setChecked(mood){
+        buttons.forEach(b=>{
+          const on = b.dataset.mood===mood;
+          b.setAttribute("aria-checked", String(on));
+          b.classList.toggle("selected", on);
+          b.tabIndex = on ? 0 : -1;
+        });
+      }
+      function showMsg(mood){
+        feedback.textContent = moodMsgs[mood] || "";
+        if(feedback.textContent) feedback.classList.add("show"); else feedback.classList.remove("show");
+      }
+    }
+
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", init); else init();
+  </script>
+</body>
+</html>

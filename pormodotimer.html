@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pomodoro Timer — Green</title>
+<style>
+  :root{
+    --g0:#F5FBF7; --g1:#EAF7F0; --g2:#D8F1E3; --g3:#C7EBD7; --g4:#AEE3C7; --g5:#8FD9B4;
+    --ink:#2E5E4E; --ink-70:rgba(46,94,78,.7);
+    --flash:#bbf7d0;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--g0); color:var(--ink);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    padding:20px; /* no 100vh to avoid tall iframes in Notion */
+    display:flex; align-items:center; justify-content:center;
+  }
+  .card{
+    width:100%; max-width:520px; background:var(--g1);
+    border:2px solid var(--g3); border-radius:20px; padding:20px;
+    box-shadow:0 2px 12px rgba(46,94,78,.08);
+  }
+  h1{margin:0 0 8px 0; font-size:22px}
+  .sub{margin:0 0 14px 0; font-size:13px; color:var(--ink-70)}
+  .center{display:flex; align-items:center; justify-content:center}
+  .stage{margin:8px 0 12px}
+  .dial{width:240px; height:240px; transform:rotate(-90deg)}
+  .time{margin-top:10px; font-size:34px; font-weight:700; text-align:center}
+  .mode{font-size:12px; text-align:center; color:var(--ink-70); text-transform:uppercase; letter-spacing:.06em}
+  .controls,.footer-row{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:14px}
+  button{
+    appearance:none; border:2px solid var(--g3); background:var(--g0);
+    color:var(--ink); padding:10px 14px; border-radius:12px; font-weight:600; cursor:pointer;
+    transition:background .2s,border-color .2s,opacity .2s
+  }
+  button.primary{background:var(--g5); border-color:var(--g4)}
+  button:disabled{opacity:.6; cursor:not-allowed}
+  .ghost{background:#fff}
+  .settings{
+    margin:14px 0 0 0; background:#fff; border:1px solid var(--g2);
+    border-radius:14px; padding:14px; display:none;
+  }
+  .settings h3{margin:0 0 10px 0; font-size:16px}
+  .row{display:flex; align-items:center; gap:10px; margin:8px 0; flex-wrap:wrap}
+  .label{min-width:84px; font-size:13px}
+  .chip{padding:6px 10px; border-radius:10px; background:var(--g2); border:1px solid var(--g3); font-size:12px}
+  input[type="number"]{
+    width:92px; padding:8px 10px; border-radius:10px; border:1px solid var(--g3); background:#fff; color:var(--ink);
+    outline:none
+  }
+  input[type="number"]:focus{border-color:var(--g4)}
+  .flash{animation:flash 0.8s}
+  @keyframes flash{0%{background:var(--flash)}100%{background:transparent}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+  <div class="card" role="application" aria-label="Pomodoro Timer">
+    <h1>Pomodoro</h1>
+    <p class="sub">Focus cycles. Clean and green.</p>
+
+    <div class="stage center">
+      <svg class="dial" viewBox="0 0 240 240" aria-hidden="true">
+        <!-- track -->
+        <circle cx="120" cy="120" r="110" fill="none" stroke="var(--g2)" stroke-width="12"/>
+        <!-- progress -->
+        <circle id="progress" cx="120" cy="120" r="110" fill="none" stroke="var(--ink)" stroke-width="12"
+                stroke-linecap="round" class="progress-circle" />
+      </svg>
+    </div>
+
+    <div id="time" class="time" role="status" aria-live="polite">25:00</div>
+    <div id="mode" class="mode">WORK</div>
+
+    <div class="controls">
+      <button id="startPause" class="primary" aria-pressed="false">
+        <span id="startPauseLabel">Start</span>
+      </button>
+      <button id="reset">Reset</button>
+      <button id="toggleSettings" class="ghost" aria-expanded="false" aria-controls="settings">Settings</button>
+    </div>
+
+    <div id="settings" class="settings" role="region" aria-label="Timer Settings">
+      <h3>Timer Settings</h3>
+      <div class="row">
+        <span class="label">Work (min)</span>
+        <input id="workMin" type="number" min="5" max="90" step="1" />
+        <span class="chip" id="workChip">25 min</span>
+      </div>
+      <div class="row">
+        <span class="label">Break (min)</span>
+        <input id="breakMin" type="number" min="3" max="45" step="1" />
+        <span class="chip" id="breakChip">5 min</span>
+      </div>
+      <div class="row">
+        <button id="save" class="primary">Save</button>
+        <button id="cancel">Cancel</button>
+      </div>
+    </div>
+
+    <div class="footer-row">
+      <span class="chip">Local save on</span>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const timeEl = $("time"), modeEl = $("mode"), prog = $("progress");
+  const startPauseBtn = $("startPause"), startPauseLabel = $("startPauseLabel");
+  const resetBtn = $("reset"), toggleSettingsBtn = $("toggleSettings");
+  const panel = $("settings"), workMin = $("workMin"), breakMin = $("breakMin");
+  const workChip = $("workChip"), breakChip = $("breakChip");
+  const saveBtn = $("save"), cancelBtn = $("cancel");
+
+  const KEY = "pomodoro_green_v2";
+  const R = 110, CIRC = 2 * Math.PI * R;
+  prog.setAttribute("stroke-dasharray", String(CIRC));
+  prog.setAttribute("stroke-dashoffset", String(CIRC));
+
+  let S = load(); // {work,break,isWork,remaining,running,timestamp}
+  let timer = null;
+
+  init();
+
+  function init(){
+    // hydrate inputs
+    workMin.value = S.work;
+    breakMin.value = S.break;
+    updateChips();
+
+    // resume state
+    if (S.running) startTimer();
+    updateUI();
+
+    // events
+    startPauseBtn.onclick = onStartPause;
+    resetBtn.onclick = onReset;
+    toggleSettingsBtn.onclick = onToggleSettings;
+    saveBtn.onclick = onSave;
+    cancelBtn.onclick = onCancel;
+
+    document.addEventListener("visibilitychange", onVisibilityReturn);
+    window.addEventListener("focus", onVisibilityReturn);
+  }
+
+  function onStartPause(){
+    S.running = !S.running;
+    startPauseBtn.setAttribute("aria-pressed", String(S.running));
+    if (S.running) {
+      S.timestamp = Date.now();
+      tick(); timer = setInterval(tick, 1000);
+    } else {
+      clearInterval(timer); timer = null;
+    }
+    updateUI(); save();
+  }
+
+  function onReset(){
+    S.running = false; clearInterval(timer); timer = null;
+    S.remaining = (S.isWork ? S.work : S.break) * 60;
+    updateUI(); save();
+  }
+
+  function onToggleSettings(){
+    const open = panel.style.display !== "none" && panel.style.display !== "";
+    if (open) {
+      panel.style.display = "none";
+      toggleSettingsBtn.setAttribute("aria-expanded","false");
+    } else {
+      // prefill current values
+      workMin.value = S.work; breakMin.value = S.break;
+      panel.style.display = "block";
+      toggleSettingsBtn.setAttribute("aria-expanded","true");
+    }
+  }
+
+  function onSave(){
+    const w = clamp(int(workMin.value, 25), 5, 90);
+    const b = clamp(int(breakMin.value, 5), 3, 45);
+    S.work = w; S.break = b;
+    // reset remaining for current phase
+    S.remaining = (S.isWork ? S.work : S.break) * 60;
+    updateChips(); updateUI(); save();
+    onToggleSettings();
+  }
+
+  function onCancel(){ onToggleSettings(); }
+
+  function onVisibilityReturn(){
+    if (!document.hidden && S.running) {
+      const now = Date.now();
+      const dt = Math.floor((now - (S.timestamp || now)) / 1000);
+      if (dt > 0) S.remaining = Math.max(0, S.remaining - dt);
+      S.timestamp = now;
+      updateUI();
+      if (S.remaining === 0) completePhase();
+    }
+  }
+
+  function tick(){
+    S.remaining = Math.max(0, S.remaining - 1);
+    updateUI();
+    if (S.remaining === 0) {
+      completePhase();
+    }
+    S.timestamp = Date.now();
+    save();
+  }
+
+  function completePhase(){
+    clearInterval(timer); timer = null; S.running = false;
+    // flash effect for success
+    document.querySelector(".card").classList.add("flash");
+    setTimeout(()=>document.querySelector(".card").classList.remove("flash"), 800);
+    // switch
+    S.isWork = !S.isWork;
+    S.remaining = (S.isWork ? S.work : S.break) * 60;
+    updateUI(); save();
+  }
+
+  function updateUI(){
+    // time text
+    timeEl.textContent = mmss(S.remaining);
+    // mode text
+    modeEl.textContent = S.isWork ? "WORK" : "BREAK";
+    // progress ring
+    const total = (S.isWork ? S.work : S.break) * 60;
+    const frac = 1 - (S.remaining / Math.max(1,total));
+    prog.setAttribute("stroke-dashoffset", String(CIRC * frac));
+    // button label
+    startPauseLabel.textContent = S.running ? "Pause" : "Start";
+  }
+
+  function updateChips(){
+    workChip.textContent = `${S.work} min`;
+    breakChip.textContent = `${S.break} min`;
+  }
+
+  function startTimer(){ tick(); timer = setInterval(tick, 1000); }
+
+  function save(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify({
+        work:S.work, break:S.break, isWork:S.isWork, remaining:S.remaining,
+        running:S.running, timestamp:S.timestamp || Date.now()
+      }));
+    }catch(e){}
+  }
+
+  function load(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(KEY) || "{}");
+      let work = clamp(int(raw.work,25),5,90);
+      let brk  = clamp(int(raw.break,5),3,45);
+      let isWork = raw.isWork !== false; // default true
+      let remaining = int(raw.remaining, work*60);
+      let running = !!raw.running;
+      let ts = raw.timestamp || Date.now();
+      // catch up if running while closed
+      if (running) {
+        const dt = Math.floor((Date.now() - ts)/1000);
+        remaining = Math.max(0, remaining - dt);
+        if (remaining === 0) running = false;
+      }
+      return {work, break:brk, isWork, remaining, running, timestamp:Date.now()};
+    }catch(e){
+      return {work:25, break:5, isWork:true, remaining:25*60, running:false, timestamp:Date.now()};
+    }
+  }
+
+  // utils
+  function mmss(s){ const m=Math.floor(s/60), ss=s%60; return `${String(m).padStart(2,"0")}:${String(ss).padStart(2,"0")}`; }
+  function int(v, def){ v=Number(v); return Number.isFinite(v)?Math.floor(v):def; }
+  function clamp(v,min,max){ return Math.min(max, Math.max(min, v)); }
+})();
+</script>
+</body>
+</html>

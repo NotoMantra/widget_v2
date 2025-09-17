@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mindful Breathing — Notion Embed</title>
+<style>
+  :root{--g0:#F5FBF7;--g1:#EAF7F0;--g2:#D8F1E3;--g3:#C7EBD7;--g4:#AEE3C7;--g5:#8FD9B4;--ink:#1f3d2e}
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--g2);color:var(--ink);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .wrap{width:100%;max-width:520px;text-align:center}
+  h1{margin:0 0 6px 0;font-size:24px;font-weight:700}
+  .sub{font-size:14px;opacity:.85;margin-bottom:20px}
+  .card{background:var(--g1);border:2px solid var(--g3);border-radius:20px;padding:20px}
+  .stage{display:flex;align-items:center;justify-content:center;margin:8px 0 14px}
+  .circle{width:128px;height:128px;border-radius:50%;background:var(--g5);position:relative;display:flex;align-items:center;justify-content:center}
+  .circle.active{animation:breathe 6s ease-in-out infinite}
+  .circle::before,.circle::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--g4);opacity:0}
+  .circle.active::before{animation:ripple 3.8s ease-out infinite .4s}
+  .circle.active::after{animation:ripple 4.6s ease-out infinite 1.4s}
+  @keyframes breathe{0%{transform:scale(.98)}50%{transform:scale(1.04)}100%{transform:scale(.98)}}
+  @keyframes ripple{0%{transform:scale(1);opacity:.25}80%{opacity:0}100%{transform:scale(1.6);opacity:0}}
+  .itext{min-height:40px;font-size:16px;font-weight:600}
+  .ttext{font-size:13px;opacity:.7}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+  button{
+    border:0;border-radius:999px;padding:10px 16px;cursor:pointer;font-size:14px;font-weight:600;
+    background:var(--g4);color:var(--ink)
+  }
+  button.primary{background:#22c55e;color:#fff}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  .meta{margin-top:12px;font-size:12px;color:#335846}
+  .sr-only{position:absolute;left:-9999px}
+  @media (prefers-reduced-motion:reduce){.circle.active,.circle.active::before,.circle.active::after{animation:none}}
+</style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="Mindful Breathing Coach">
+    <h1>Mindful Breathing</h1>
+    <div class="sub">Simple awareness. No counting. No holding.</div>
+
+    <div class="card" aria-live="polite">
+      <div class="stage"><div id="circle" class="circle" aria-hidden="true"></div></div>
+      <div id="itext" class="itext">Find a comfortable position</div>
+      <div id="ttext" class="ttext">Click Start when ready</div>
+
+      <div class="controls" role="group" aria-label="Controls">
+        <button id="start" type="button" class="primary" aria-pressed="false">Start Session</button>
+        <button id="dur" type="button">Duration: 5 min</button>
+        <button id="voice" type="button" aria-pressed="false">Voice: Off</button>
+      </div>
+
+      <div class="meta" id="meta">Mindful breathing only. Let the breath move at its own pace.</div>
+    </div>
+    <span class="sr-only" id="live" aria-live="assertive"></span>
+  </div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const circle=$("circle"), itext=$("itext"), ttext=$("ttext"),
+        start=$("start"), dur=$("dur"), meta=$("meta"),
+        live=$("live"), voiceBtn=$("voice");
+
+  const DURS=[3,5,10,15,20];
+  const KEY="mbreath.v4";
+  const S = load();
+  let active=false, secs=0, tickInt=null, instrTo=null, visPaused=false;
+
+  // Voice
+  let voiceOn=false, selectedVoice=null, voicesReady=false, utterQueue=[];
+  const FEMALE_PRIORITY=[/Google UK English Female/i,/Google US English/i,/Samantha/i,/Victoria/i,/Karen/i,/Serena/i,/Moira/i,/Tessa/i,/Microsoft Aria.*English/i,/Microsoft Sonia.*English/i,/Microsoft Zira.*English/i];
+  const LANG_PREF=/(en-GB|en-US|en-IN|English)/i;
+
+  function pickBestFemaleVoice(list){
+    for(const rx of FEMALE_PRIORITY){ const v=list.find(v=>rx.test(v.name)); if(v) return v; }
+    const m=list.filter(v=>LANG_PREF.test(v.lang||"")).sort((a,b)=>a.name.localeCompare(b.name));
+    return m[0]||list[0]||null;
+  }
+  function initVoices(){
+    if(!("speechSynthesis" in window)) return;
+    const load=()=>{
+      const list=window.speechSynthesis.getVoices();
+      if(list && list.length){ selectedVoice=pickBestFemaleVoice(list); voicesReady=true; }
+    };
+    load(); window.speechSynthesis.onvoiceschanged=load;
+  }
+
+  const lines=[
+    "Let the breath be easy and natural.",
+    "Relax the jaw and let the tongue rest.",
+    "Soften the shoulders and the neck.",
+    "Notice where your body touches the chair or ground.",
+    "Feel gentle movement in the body as you breathe.",
+    "If thoughts come, acknowledge them and return.",
+    "Give yourself permission to rest for a moment.",
+    "Bring a light attention to breathing.",
+    "Allow the eyes and forehead to soften.",
+    "Sense the air at the tip of the nose."
+  ];
+  let idx=0;
+
+  // Init UI
+  setDurationText(S.duration);
+  start.addEventListener("click", toggle);
+  dur.addEventListener("click", cycleDuration);
+  document.addEventListener("visibilitychange", handleVisibility);
+  voiceBtn.addEventListener("click", toggleVoice);
+
+  // Voice capability gate
+  const VOICE_OK = ("speechSynthesis" in window);
+  if(!VOICE_OK){
+    voiceBtn.textContent="Voice: Unavailable";
+    voiceBtn.disabled=true;
+  }else{
+    initVoices();
+  }
+  // Restore voice pref only if supported
+  voiceOn = VOICE_OK && !!S.voice;
+  voiceBtn.textContent = `Voice: ${voiceOn ? "On" : "Off"}`;
+  voiceBtn.setAttribute("aria-pressed", String(voiceOn));
+
+  function load(){
+    try{ const saved=JSON.parse(localStorage.getItem(KEY)||"{}"); return {duration:saved.duration||5, voice:!!saved.voice}; }
+    catch(e){ return {duration:5, voice:false}; }
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify({duration:S.duration, voice:voiceOn})); }catch(e){} }
+  function setDurationText(m){ dur.textContent=`Duration: ${m} min`; }
+  function cycleDuration(){ if(active) return; const i=DURS.indexOf(S.duration); S.duration=DURS[(i+1)%DURS.length]; setDurationText(S.duration); save(); }
+  function toggle(){ active ? end() : startSession(); }
+
+  function startSession(){
+    active=true; secs=S.duration*60; start.textContent="End Session"; start.setAttribute("aria-pressed","true");
+    meta.textContent="Session in progress. Breathe naturally."; circle.classList.add("active");
+    updateInstruction(true); updateTimerText();
+    tickInt=setInterval(tick,1000); scheduleInstruction(); announce("Session started");
+  }
+  function end(){
+    active=false; clearIntervalSafe(); clearTimeoutSafe(); circle.classList.remove("active");
+    itext.textContent="Well done. Notice how you feel."; ttext.textContent="Session complete";
+    meta.textContent="Thank you for practicing."; start.textContent="Start Session"; start.setAttribute("aria-pressed","false");
+    announce("Session complete"); cancelSpeech();
+    setTimeout(()=>{ if(!active){ itext.textContent="Find a comfortable position"; ttext.textContent="Click Start when ready"; meta.textContent="Mindful breathing only. No holding or forcing."; } },4000);
+  }
+  function tick(){ if(!active) return; secs-=1; updateTimerText(); if(secs<=0){ end(); } }
+  function updateTimerText(){ const m=Math.floor(secs/60), s=String(secs%60).padStart(2,"0"); ttext.textContent=`${m}:${s} remaining`; }
+  function updateInstruction(force){
+    const next=(idx+1)%lines.length; idx=force?Math.floor(Math.random()*lines.length):next;
+    const line=lines[idx]; itext.textContent=line; speakSmooth(line);
+  }
+  function scheduleInstruction(){ const ms=15000+Math.random()*10000; instrTo=setTimeout(function run(){ if(active){ updateInstruction(false); scheduleInstruction(); }}, ms); }
+  function clearIntervalSafe(){ if(tickInt){ clearInterval(tickInt); tickInt=null; } }
+  function clearTimeoutSafe(){ if(instrTo){ clearTimeout(instrTo); instrTo=null; } }
+  function handleVisibility(){
+    if(document.hidden && active){ clearIntervalSafe(); clearTimeoutSafe(); circle.classList.remove("active"); ttext.textContent="Paused"; cancelSpeech(); }
+    else if(!document.hidden && active){ circle.classList.add("active"); tickInt=setInterval(tick,1000); scheduleInstruction(); updateTimerText(); }
+  }
+
+  // Voice helpers
+  function toggleVoice(){
+    if(!VOICE_OK) return;
+    voiceOn=!voiceOn; voiceBtn.textContent=`Voice: ${voiceOn?"On":"Off"}`; voiceBtn.setAttribute("aria-pressed", String(voiceOn));
+    if(!voiceOn) cancelSpeech(); save();
+  }
+  function cancelSpeech(){ try{ window.speechSynthesis.cancel(); utterQueue.length=0; }catch(e){} }
+  function speakSmooth(text){
+    if(!voiceOn || !VOICE_OK) return;
+    if(!voicesReady){ window.speechSynthesis.getVoices(); }
+    cancelSpeech();
+    const phrases=text.split(/[,.;:]\s*/).filter(Boolean);
+    const rate=.82,pitch=1.05,vol=.95,pause=350;
+    const list=window.speechSynthesis.getVoices(); if(list && list.length) selectedVoice=pickBestFemaleVoice(list);
+    let t=0;
+    phrases.forEach((p,i)=>{
+      const u=new SpeechSynthesisUtterance(p.trim());
+      u.lang=(selectedVoice&&selectedVoice.lang)||"en-US"; u.rate=rate; u.pitch=pitch; u.volume=vol; if(selectedVoice) u.voice=selectedVoice;
+      setTimeout(()=>{ try{ window.speechSynthesis.speak(u); }catch(e){} }, t);
+      t += (i===phrases.length-1? pause+250: pause);
+    });
+  }
+
+  function announce(msg){ live.textContent=msg; }
+})();
+</script>
+</body>
+</html>
