@@ -1,80 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Daily Visualization Prompt</title>
   <style>
+    :root{
+      --g0:#F5FBF7; --g1:#EAF7F0; --g2:#D8F1E3; --g3:#C7EBD7; --g5:#8FD9B4; --ink:#2E5E4E;
+    }
     *{margin:0;padding:0;box-sizing:border-box}
     body{
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-      background:#F5FBF7;
-      padding:20px;
-      /* no 100vh to avoid tall iframes in Notion */
+      background:var(--g0); color:var(--ink);
+      padding:12px; /* tighter */
     }
     .viz-prompt-card{
-      background:#EAF7F0;
-      border:1px solid #D8F1E3;
-      border-radius:16px;
-      padding:24px;
-      max-width:640px;
-      min-width:280px;
+      position:relative;
+      background:var(--g1);
+      border:1px solid var(--g2);
+      border-radius:14px;
+      padding:16px;          /* tighter */
+      max-width:560px;       /* narrower */
       width:100%;
       margin:0 auto;
-      position:relative;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      text-align:center;
-      color:#2E5E4E;
+      display:flex;flex-direction:column;align-items:center;text-align:center;
+      overflow:hidden;
+      animation:cardIn .28s ease-out both;
     }
-    .card-header{
-      display:flex;justify-content:space-between;align-items:flex-start;
-      width:100%;margin-bottom:24px
+    /* subtle animated top accent */
+    .viz-prompt-card::after{
+      content:""; position:absolute; inset:0 0 auto 0; height:2px;
+      background:linear-gradient(90deg, transparent 0%, var(--g3) 35%, var(--g5) 50%, var(--g3) 65%, transparent 100%);
+      background-size:200% 100%;
+      animation:shimmer 6s linear infinite;
+      opacity:.55;
     }
+
+    .card-header{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:12px}
     .card-title{
-      font-size:14px;font-weight:600;color:#2E5E4E;text-transform:uppercase;
-      letter-spacing:.02em;opacity:.85
+      display:flex; align-items:center; gap:8px;
+      font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; opacity:.85;
     }
+    .pulse-dot{
+      width:8px;height:8px;border-radius:50%;
+      background:var(--g5); box-shadow:0 0 0 0 rgba(143,217,180,.6);
+      animation:pulse 2.2s ease-out infinite;
+    }
+
     .copy-button{
-      background:transparent;border:none;color:#2E5E4E;cursor:pointer;
-      padding:8px;border-radius:8px;opacity:.7;transition:background .2s,opacity .2s;
-      width:32px;height:32px;display:flex;align-items:center;justify-content:center
+      background:transparent;border:none;color:var(--ink);cursor:pointer;
+      padding:6px;border-radius:8px;opacity:.75;transition:background .2s,opacity .2s,transform .08s;
+      width:30px;height:30px;display:flex;align-items:center;justify-content:center
     }
-    .copy-button:hover{opacity:1;background:#D8F1E3}
-    .copy-button:focus-visible{outline:2px solid #2E5E4E;outline-offset:2px;opacity:1}
+    .copy-button:hover{opacity:1;background:var(--g2)}
+    .copy-button:active{transform:scale(.96)}
+    .copy-button:focus-visible{outline:2px solid var(--ink);outline-offset:2px;opacity:1}
     .copy-button svg{width:16px;height:16px}
+
     .prompt-text{
-      font-size:20px;font-weight:600;color:#2E5E4E;line-height:1.45;margin-bottom:24px;
-      display:flex;align-items:center;min-height:2.2em;text-align:center
+      font-size:18px;        /* smaller */
+      font-weight:600;
+      line-height:1.35;      /* tighter */
+      margin-bottom:6px;     /* tighter */
+      padding:2px 4px;       /* very light breathing room */
+      opacity:0; transform:translateY(4px);
     }
-    .card-footer{display:flex;justify-content:flex-end;width:100%}
-    .daily-chip{
-      background:#C7EBD7;color:#2E5E4E;font-size:12px;font-weight:600;
-      padding:4px 12px;border-radius:12px;opacity:.8
-    }
+    .prompt-text.loaded{animation:rise .28s ease-out both}
+
     .copy-confirmation{
-      position:absolute;top:16px;right:52px;background:#8FD9B4;color:#2E5E4E;
-      font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;
-      opacity:0;transform:translateY(-8px);transition:opacity .25s,transform .25s;
-      pointer-events:none
+      position:absolute; top:10px; right:44px;
+      background:var(--g5); color:var(--ink);
+      font-size:11px; font-weight:700; padding:4px 8px; border-radius:8px;
+      opacity:0; transform:translateY(-6px); transition:opacity .2s, transform .2s; pointer-events:none
     }
-    .copy-confirmation.show{opacity:1;transform:translateY(0)}
+    .copy-confirmation.show{opacity:1; transform:translateY(0)}
+
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(143,217,180,.55)}70%{box-shadow:0 0 0 10px rgba(143,217,180,0)}100%{box-shadow:0 0 0 0 rgba(143,217,180,0)}}
+    @keyframes rise{to{opacity:1; transform:none}}
+    @keyframes cardIn{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+
     @media (max-width:480px){
-      body{padding:16px}
-      .viz-prompt-card{padding:20px}
-      .prompt-text{font-size:18px;margin-bottom:20px}
-      .card-header{margin-bottom:20px}
+      body{padding:10px}
+      .viz-prompt-card{padding:14px}
+      .card-header{margin-bottom:10px}
+      .prompt-text{font-size:17px}
     }
     @media (prefers-reduced-motion:reduce){
       *{animation:none!important;transition:none!important}
+      .prompt-text{opacity:1; transform:none}
     }
   </style>
 </head>
 <body>
   <section class="viz-prompt-card" role="region" aria-label="Daily Visualization Prompt">
     <div class="card-header">
-      <h2 class="card-title">Today's Visualization</h2>
+      <h2 class="card-title"><span class="pulse-dot" aria-hidden="true"></span> Today’s Visualization</h2>
       <button class="copy-button" type="button" title="Copy visualization to clipboard" aria-label="Copy visualization to clipboard">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -85,15 +106,10 @@
 
     <div class="copy-confirmation" aria-live="polite">Copied</div>
 
-    <p id="promptText" class="prompt-text" role="status" aria-live="polite">Loading your daily visualization...</p>
-
-    <div class="card-footer">
-      <span class="daily-chip">changes daily</span>
-    </div>
+    <p id="promptText" class="prompt-text" role="status" aria-live="polite">Loading…</p>
   </section>
 
   <script>
-    // Visualization prompts
     const VISUALIZATION_PROMPTS = [
       "Visualize your signature on the final agreement.",
       "See yourself breathing calmly and smiling after completion.",
@@ -179,10 +195,7 @@
       "See yourself dancing gracefully with uncertainty and possibility."
     ];
 
-    function hashString(str){
-      let h=0; for(let i=0;i<str.length;i++){ h=((h<<5)-h)+str.charCodeAt(i); h|=0; }
-      return Math.abs(h);
-    }
+    function hashString(str){ let h=0; for(let i=0;i<str.length;i++){ h=((h<<5)-h)+str.charCodeAt(i); h|=0; } return Math.abs(h); }
     function todayKey(){
       const d=new Date();
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -200,6 +213,7 @@
       try{ localStorage.setItem(storageKey, JSON.stringify({keyDay:key, idx})); }catch(e){}
       return idx;
     }
+
     async function copyToClipboard(text){
       try{
         if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(text); }
@@ -209,21 +223,23 @@
           ta.focus(); ta.select(); document.execCommand('copy'); ta.remove();
         }
         const c=document.querySelector('.copy-confirmation');
-        c.classList.add('show'); setTimeout(()=>c.classList.remove('show'), 1600);
-      }catch(e){ /* silent */ }
+        c.classList.add('show'); setTimeout(()=>c.classList.remove('show'), 1400);
+      }catch(e){}
     }
+
     function initWidget(){
       const idx=getDailyPromptIndex();
       const daily=VISUALIZATION_PROMPTS[idx];
       const el=document.getElementById('promptText');
       el.textContent=daily;
+      el.classList.add('loaded');
       const btn=document.querySelector('.copy-button');
       btn.addEventListener('click', ()=>copyToClipboard(daily));
       btn.addEventListener('keydown', e=>{
         if(e.key==='Enter' || e.key===' '){ e.preventDefault(); copyToClipboard(daily); }
       });
     }
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initWidget); else initWidget();
+    if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', initWidget); } else { initWidget(); }
   </script>
 </body>
 </html>
