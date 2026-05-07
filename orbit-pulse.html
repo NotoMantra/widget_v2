@@ -1,0 +1,350 @@
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  ORBIT PULSE — GitHub Pages + Notion Embed Setup            ║
+  ║                                                              ║
+  ║  1. Create a GitHub repo (e.g. "orbit-pulse")               ║
+  ║  2. Drop this file in the root as  index.html               ║
+  ║  3. Go to Settings → Pages → Deploy from branch → main /    ║
+  ║     root → Save                                             ║
+  ║  4. Your URL: https://yourusername.github.io/orbit-pulse/   ║
+  ║  5. In Notion: /embed → paste that URL                     ║
+  ║  6. Resize the embed block height to ~600px                  ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbit Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:transparent}
+body{
+  display:flex;
+  justify-content:center;
+  padding:24px 16px 32px;
+  font-family:'DM Sans',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+#widget{width:100%;max-width:360px}
+.card{background:#fff;border:2px solid #111;border-radius:20px;overflow:hidden}
+
+/* Header */
+.hdr{padding:18px 20px 14px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:flex-start}
+.title{font-family:'Archivo Black',sans-serif;font-size:26px;line-height:1.1;color:#0a0a0a}
+.subtitle{font-size:12px;color:#9ca3af;margin-top:4px}
+.gear{background:none;border:1.5px solid #e5e7eb;border-radius:8px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:17px;margin-top:2px;flex-shrink:0}
+
+/* 2x2 grid */
+.grid{display:grid;grid-template-columns:1fr 1fr}
+.cell{padding:16px 18px 14px}
+.br{border-right:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb}
+.bb{border-bottom:1px solid #e5e7eb}
+.bl{border-right:1px solid #e5e7eb;padding-top:14px;padding-bottom:16px}
+.bn{padding-top:14px;padding-bottom:16px}
+.ql{font-size:11px;font-weight:500;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase}
+.num{font-family:'Archivo Black',sans-serif;font-size:48px;line-height:1;color:#0a0a0a;margin:4px 0}
+.num.red{color:#dc2626}
+.status{display:flex;align-items:center;gap:5px;margin-bottom:10px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.slabel{font-size:12px;font-weight:500}
+.delta{font-size:13px;font-weight:600;margin-bottom:6px}
+.ring{width:26px;height:26px;border-radius:50%;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:13px;margin-top:10px}
+.inner-dot{width:7px;height:7px;border-radius:50%}
+
+/* Rec strip */
+.rec{border-top:1px solid #e5e7eb;padding:10px 18px;background:#fafafa}
+.rec-txt{font-size:12px;color:#374151}
+
+/* Settings */
+.settings{padding:14px 20px 20px}
+.sec-hdr{font-size:11px;font-weight:500;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase;margin:14px 0 8px}
+.sec-hdr.first{margin-top:0}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f3f4f6}
+.srow-label{font-size:13px;color:#374151}
+.scontrols{display:flex;align-items:center;gap:6px}
+.sbtn{width:26px;height:26px;border:1px solid #d1d5db;border-radius:5px;background:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#374151;flex-shrink:0;line-height:1}
+.scount{width:30px;text-align:center;font-size:15px;font-weight:500;font-family:'Archivo Black',sans-serif;color:#0a0a0a}
+.item-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f3f4f6}
+.item-txt{flex:1;font-size:13px;color:#374151}
+.item-del{background:none;border:none;cursor:pointer;color:#dc2626;font-size:17px;padding:0 2px;flex-shrink:0;line-height:1}
+.no-items{font-size:13px;color:#9ca3af;padding:6px 0;border-bottom:1px solid #f3f4f6}
+.add-form{margin-top:8px;padding:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px}
+.add-lbl{font-size:11px;font-weight:500;color:#92400e;margin-bottom:6px}
+.add-inp{width:100%;padding:7px 10px;border:1.5px solid #d97706;border-radius:7px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;background:white}
+.add-btns{display:flex;gap:8px;margin-top:7px}
+.btn-p{flex:1;padding:7px;background:#0a0a0a;color:white;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif}
+.btn-s{flex:1;padding:7px;background:white;color:#6b7280;border:1px solid #e5e7eb;border-radius:7px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif}
+.bl-summary{margin-top:14px;padding:10px 14px;background:#f9fafb;border-radius:10px;display:flex;justify-content:space-between;align-items:center}
+.bl-lbl{font-size:12px;color:#6b7280}
+.bl-val{font-family:'Archivo Black',sans-serif;font-size:17px}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+</style>
+</head>
+<body>
+<div id="widget"><div class="card" id="app"></div></div>
+
+<script>
+const KEY = 'orbit-pulse-v1';
+const PERSIST = ['inbox','nextMoves','lew','prevInbox','inboxItems','nextMoveItems','lewItems','trend'];
+
+let st = {
+  inbox:8, nextMoves:5, lew:3,
+  prevInbox:5,
+  inboxItems:[], nextMoveItems:[], lewItems:[],
+  trend:[28,32,30,36,38,41,42],
+  showSettings:false,
+  adding:null,
+  newText:'',
+};
+
+(function loadState(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(KEY)||'{}');
+    PERSIST.forEach(k=>{ if(saved[k]!==undefined) st[k]=saved[k]; });
+  }catch(e){}
+})();
+
+function save(){
+  const d={};
+  PERSIST.forEach(k=>d[k]=st[k]);
+  try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){}
+}
+
+function bl(){
+  return Math.min(100, st.inbox*4 + Math.max(0,5-st.nextMoves)*2 + Math.max(0,3-st.lew)*3);
+}
+
+function loadInfo(n){
+  if(n<=25) return{label:'Calm',color:'#16a34a'};
+  if(n<=50) return{label:'Manageable',color:'#16a34a'};
+  if(n<=75) return{label:'Heavy',color:'#d97706'};
+  return{label:'Overloaded',color:'#dc2626'};
+}
+
+function rec(){
+  if(st.inbox>7) return 'Clear 3 inbox items to free mental space';
+  if(st.lew===0) return 'Refill your low-energy wins list';
+  if(st.nextMoves===0) return 'Your next moves list is empty — refill it';
+  return 'Pick 1 low-energy win to build momentum';
+}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function sparkline(data,color){
+  if(!data||data.length<2) return '';
+  const w=108,h=38,mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1;
+  const pts=data.map((v,i)=>[
+    ((i/(data.length-1))*w).toFixed(1),
+    (h-((v-mn)/rng)*(h-10)-5).toFixed(1)
+  ]);
+  const d='M '+pts.map(p=>p.join(',')).join(' L ');
+  const[lx,ly]=pts[pts.length-1];
+  return `<svg width="${w}" height="${h}" aria-hidden="true" style="display:block;overflow:visible">
+    <path d="${d}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lx}" cy="${ly}" r="3" fill="${color}"/>
+  </svg>`;
+}
+
+function sectionBlock(items, section, addLabel){
+  const isAdding = st.adding===section;
+  let h='';
+  if(items.length===0&&!isAdding){
+    h+=`<div class="no-items">No items yet — press + to add one</div>`;
+  } else {
+    items.forEach((item,i)=>{
+      h+=`<div class="item-row">
+        <span class="item-txt">${esc(item)}</span>
+        <button class="item-del" data-act="del" data-sec="${section}" data-idx="${i}" aria-label="Remove">×</button>
+      </div>`;
+    });
+  }
+  if(isAdding){
+    h+=`<div class="add-form">
+      <div class="add-lbl">${addLabel}</div>
+      <input id="add-inp" class="add-inp" placeholder="e.g. …" autocomplete="off"/>
+      <div class="add-btns">
+        <button class="btn-p" data-act="confirm">Add item</button>
+        <button class="btn-s" data-act="cancel">Skip</button>
+      </div>
+    </div>`;
+  }
+  return h;
+}
+
+function render(){
+  const load=bl(), li=loadInfo(load), inboxDelta=st.inbox-st.prevInbox;
+  let h=`<h2 class="sr-only">Orbit Pulse — ADHD second brain focus dashboard</h2>`;
+
+  // Header (always visible)
+  h+=`<div class="hdr">
+    <div>
+      <div class="title">Orbit Pulse</div>
+      <div class="subtitle">Focus signal for your second brain</div>
+    </div>
+    <button class="gear" id="gear" aria-label="${st.showSettings?'Close settings':'Open settings'}">
+      ${st.showSettings?'✕':'⚙'}
+    </button>
+  </div>`;
+
+  if(st.showSettings){
+    h+=`<div class="settings">
+
+      <div class="sec-hdr first">Inbox · ${st.inboxItems.length} named</div>
+      <div class="srow">
+        <span class="srow-label">Inbox items</span>
+        <div class="scontrols">
+          <button class="sbtn" data-act="dec" data-sec="inbox">−</button>
+          <span class="scount">${st.inbox}</span>
+          <button class="sbtn" data-act="inc" data-sec="inbox">+</button>
+        </div>
+      </div>
+      ${sectionBlock(st.inboxItems,'inbox',"What's this inbox item?")}
+
+      <div class="sec-hdr">Next Moves · ${st.nextMoveItems.length} named</div>
+      <div class="srow">
+        <span class="srow-label">Next moves</span>
+        <div class="scontrols">
+          <button class="sbtn" data-act="dec" data-sec="nextMoves">−</button>
+          <span class="scount">${st.nextMoves}</span>
+          <button class="sbtn" data-act="inc" data-sec="nextMoves">+</button>
+        </div>
+      </div>
+      ${sectionBlock(st.nextMoveItems,'nextMoves',"What's this next move?")}
+
+      <div class="sec-hdr">Low Energy Wins · ${st.lewItems.length} named</div>
+      <div class="srow">
+        <span class="srow-label">Low energy wins</span>
+        <div class="scontrols">
+          <button class="sbtn" data-act="dec" data-sec="lew">−</button>
+          <span class="scount">${st.lew}</span>
+          <button class="sbtn" data-act="inc" data-sec="lew">+</button>
+        </div>
+      </div>
+      ${sectionBlock(st.lewItems,'lew',"What's this easy win?")}
+
+      <div class="bl-summary">
+        <span class="bl-lbl">Current Brain Load</span>
+        <span class="bl-val" style="color:${li.color}">${load} · ${li.label}</span>
+      </div>
+    </div>`;
+  } else {
+    h+=`<div class="grid">
+      <div class="cell br">
+        <div class="ql">Brain Load</div>
+        <div class="num">${load}</div>
+        <div class="status">
+          <div class="dot" style="background:${li.color}"></div>
+          <span class="slabel" style="color:${li.color}">${li.label}</span>
+        </div>
+        ${sparkline(st.trend,li.color)}
+      </div>
+      <div class="cell bb">
+        <div class="ql">Inbox</div>
+        <div class="num${st.inbox>10?' red':''}">${st.inbox}</div>
+        ${inboxDelta!==0?`<div class="delta" style="color:${inboxDelta>0?'#dc2626':'#16a34a'}">${inboxDelta>0?'↑ +':'↓ '}${inboxDelta}</div>`:''}
+      </div>
+      <div class="cell bl">
+        <div class="ql">Next Moves</div>
+        <div class="num${st.nextMoves===0?' red':''}">${st.nextMoves}</div>
+        <div class="ring" style="border-color:${st.nextMoves>0?'#16a34a':'#dc2626'};color:${st.nextMoves>0?'#16a34a':'#dc2626'}">↗</div>
+      </div>
+      <div class="cell bn">
+        <div class="ql">Low Energy Wins</div>
+        <div class="num${st.lew===0?' red':''}">${st.lew}</div>
+        <div class="ring" style="border-color:${st.lew>0?'#16a34a':'#dc2626'}">
+          <div class="inner-dot" style="background:${st.lew>0?'#16a34a':'#dc2626'}"></div>
+        </div>
+      </div>
+    </div>
+    <div class="rec"><span class="rec-txt">${rec()}</span></div>`;
+  }
+
+  document.getElementById('app').innerHTML=h;
+  bind();
+
+  if(st.adding){
+    const inp=document.getElementById('add-inp');
+    if(inp){ inp.focus(); inp.value=st.newText; }
+  }
+}
+
+function itemsKey(sec){ return sec==='inbox'?'inboxItems':sec==='nextMoves'?'nextMoveItems':'lewItems'; }
+
+function confirmAdd(){
+  if(!st.adding) return;
+  const text=st.newText.trim();
+  const k=itemsKey(st.adding);
+  if(text) st[k]=[...st[k],text];
+  if(st.adding==='inbox') st.prevInbox=st.inbox;
+  st[st.adding]=st[st.adding]+1;
+  pushTrend();
+  st.adding=null; st.newText='';
+  save(); render();
+}
+
+function cancelAdd(){
+  st.adding=null; st.newText='';
+  render();
+}
+
+function pushTrend(){
+  st.trend=[...st.trend.slice(-6), Math.min(100, st.inbox*4 + Math.max(0,5-st.nextMoves)*2 + Math.max(0,3-st.lew)*3)];
+}
+
+function bind(){
+  document.getElementById('gear')?.addEventListener('click',()=>{
+    st.showSettings=!st.showSettings;
+    st.adding=null; st.newText='';
+    render();
+  });
+
+  document.getElementById('add-inp')?.addEventListener('input',e=>{
+    st.newText=e.target.value;
+  });
+  document.getElementById('add-inp')?.addEventListener('keydown',e=>{
+    if(e.key==='Enter') confirmAdd();
+    if(e.key==='Escape') cancelAdd();
+  });
+
+  document.querySelectorAll('[data-act]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const act=el.dataset.act, sec=el.dataset.sec;
+
+      if(act==='inc'){
+        if(st.adding===sec) return;
+        st.adding=sec; st.newText='';
+        render();
+      }
+
+      else if(act==='dec'){
+        if(st[sec]<=0) return;
+        if(sec==='inbox') st.prevInbox=st.inbox;
+        st[sec]=st[sec]-1;
+        pushTrend(); save(); render();
+      }
+
+      else if(act==='confirm') confirmAdd();
+      else if(act==='cancel') cancelAdd();
+
+      else if(act==='del'){
+        const idx=parseInt(el.dataset.idx), k=itemsKey(sec);
+        st[k]=st[k].filter((_,i)=>i!==idx);
+        if(sec==='inbox') st.prevInbox=st.inbox;
+        st[sec]=Math.max(0,st[sec]-1);
+        pushTrend(); save(); render();
+      }
+    });
+  });
+}
+
+render();
+</script>
+</body>
+</html>
