@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Breathing Orb</title>
+<title>Grounding Orb</title>
 <style>
   :root {
     --green: #4F9D69;
-    --glow: rgba(79, 157, 105, 0.42);
-    --halo: rgba(79, 157, 105, 0.10);
+    --glow: rgba(79, 157, 105, 0.45);
   }
 
   * { box-sizing: border-box; }
@@ -24,175 +23,197 @@
   .frame {
     border: 4px solid var(--green);
     border-radius: 24px;
-    padding: 30px 34px 22px;
+    padding: 24px 26px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 18px;
+    gap: 16px;
     background: transparent;
     box-shadow: 0 14px 50px rgba(79, 157, 105, 0.16);
     max-width: 300px;
     width: 100%;
   }
 
+  .eyebrow {
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
   .stage {
-    width: 190px;
-    height: 190px;
+    width: 170px;
+    height: 170px;
     display: grid;
     place-items: center;
   }
 
   .orb {
     position: relative;
-    overflow: hidden;
-    width: 140px;
-    height: 140px;
+    width: 142px;
+    height: 142px;
     border-radius: 50%;
-    border: 3px solid var(--green);
-    background: radial-gradient(circle at 50% 42%, rgba(79,157,105,0.30), rgba(79,157,105,0.10) 60%, transparent 80%);
-    box-shadow: 0 0 40px var(--glow), 0 0 0 13px var(--halo);
-    transform: scale(0.72);
-    transition: transform 4s ease-in-out;
-    will-change: transform;
+    cursor: pointer;
+    background: radial-gradient(circle at 33% 27%,
+      #BFEFD2 0%,
+      #79C293 20%,
+      #4F9D69 48%,
+      #357C53 76%,
+      #2A6044 100%);
+    box-shadow:
+      0 0 44px var(--glow),
+      inset -8px -12px 24px rgba(18, 48, 30, 0.40),
+      inset 7px 9px 18px rgba(205, 240, 214, 0.30);
+    animation: float 7s ease-in-out infinite;
   }
 
   .orb::before {
     content: "";
     position: absolute;
-    inset: 0;
-    background: conic-gradient(from 0deg,
-      rgba(79,157,105,0.08),
-      rgba(79,157,105,0.30) 90deg,
-      rgba(79,157,105,0.08) 180deg,
-      rgba(79,157,105,0.30) 270deg,
-      rgba(79,157,105,0.08) 360deg);
-    animation: shimmer 8s linear infinite;
+    top: 16%;
+    left: 22%;
+    width: 34%;
+    height: 26%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.65), rgba(255,255,255,0) 70%);
+    filter: blur(1px);
     pointer-events: none;
   }
 
-  @keyframes shimmer {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+  @keyframes float {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.045); }
   }
 
-  .label {
+  .affirmation {
     color: var(--green);
-    font-size: 21px;
+    font-size: 17px;
     font-weight: 500;
-    letter-spacing: 0.06em;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
     text-align: center;
-    min-height: 26px;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
     opacity: 1;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.6s ease;
     user-select: none;
   }
 
-  .toggle {
-    appearance: none;
-    background: transparent;
-    border: 1.5px solid var(--green);
-    color: var(--green);
-    border-radius: 999px;
-    padding: 7px 16px;
-    font-size: 12.5px;
-    font-family: inherit;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
-  }
-  .toggle:hover { opacity: 1; }
-  .toggle:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
-
   .note {
     color: var(--green);
-    opacity: 0.55;
+    opacity: 0.5;
     font-size: 11px;
-    line-height: 1.45;
+    line-height: 1.4;
     letter-spacing: 0.02em;
     text-align: center;
-    max-width: 232px;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .orb { transition: none !important; transform: scale(0.88); }
-    .orb::before { animation: none; }
+    .orb { animation: none; }
+    .affirmation { transition: none; }
   }
 </style>
 </head>
 <body>
   <div class="frame">
+    <div class="eyebrow">A gentle reminder</div>
     <div class="stage">
-      <div class="orb" id="orb"></div>
+      <div class="orb" id="orb" role="button" aria-label="Next reminder" tabindex="0"></div>
     </div>
-    <div class="label" id="label" aria-live="polite">Ready</div>
-    <button class="toggle" id="toggle" type="button">Switch to 4-7-8</button>
-    <div class="note">You never have to do this. Stop anytime, and just breathe normally if you feel lightheaded.</div>
+    <div class="affirmation" id="aff" aria-live="polite"></div>
+    <div class="note">Stay a moment, or take one with you.</div>
   </div>
 
 <script>
 (function () {
   var orb = document.getElementById("orb");
-  var label = document.getElementById("label");
-  var toggle = document.getElementById("toggle");
+  var aff = document.getElementById("aff");
 
-  var PATTERNS = {
-    box: {
-      other: "Switch to 4-7-8",
-      phases: [["Breathe in", 4, 1.0], ["Hold", 4, 1.0], ["Breathe out", 4, 0.72], ["Hold", 4, 0.72]]
-    },
-    "478": {
-      other: "Switch to box breathing",
-      phases: [["Breathe in", 4, 1.0], ["Hold", 7, 1.0], ["Breathe out", 8, 0.72]]
-    }
-  };
-
-  function safeGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
-  function safeSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) {} }
+  var LINES = [
+    "You are allowed to take today slowly.",
+    "One small thing is enough.",
+    "You do not have to earn rest.",
+    "There is no behind. You are not late.",
+    "It is okay to need things quiet.",
+    "Your pace is a valid pace.",
+    "You do not have to mask here.",
+    "Doing less can be the wise choice.",
+    "You are allowed to change your mind.",
+    "Rest counts as doing something.",
+    "You are enough, exactly as you are today.",
+    "It is okay if today is just okay.",
+    "Be as kind to yourself as you would be to a friend.",
+    "You are allowed to take up space.",
+    "Your needs are not too much.",
+    "You can rest before you finish.",
+    "Stimming is allowed. It helps.",
+    "You do not owe anyone an explanation.",
+    "Lower the bar. It was never real anyway.",
+    "Quiet is a need, not a weakness.",
+    "You are allowed to leave when it is too much.",
+    "Feelings are information, not problems.",
+    "Hard things can be done in small pieces.",
+    "It is okay to not be okay today.",
+    "You are allowed to ask for help.",
+    "Your sensitivity is not a flaw.",
+    "Comfort is not something you have to earn.",
+    "You can put it down for now.",
+    "Progress does not have to be visible.",
+    "You are allowed to want things to be easier.",
+    "Half done is still progress.",
+    "You do not have to keep up with anyone.",
+    "Your brain is not broken, just wired differently.",
+    "Take the break before you need it.",
+    "You are allowed to love what you love.",
+    "No is a complete sentence.",
+    "You can come back to this later.",
+    "Soft days are allowed.",
+    "You are doing better than the harsh voice says.",
+    "One thing, one moment, that is enough."
+  ];
 
   var reduceMotion = false;
   try { reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
-  var current = safeGet("breathPattern") === "478" ? "478" : "box";
-  var timer = null, index = 0;
+  var last = -1;
+  var timer = null;
 
-  function fadeLabel(t) {
-    label.style.opacity = "0";
-    setTimeout(function () { label.textContent = t; label.style.opacity = "1"; }, 220);
+  function pick() {
+    if (LINES.length < 2) return 0;
+    var i;
+    do { i = Math.floor(Math.random() * LINES.length); } while (i === last);
+    last = i;
+    return i;
   }
 
-  function runPhase() {
-    var phases = PATTERNS[current].phases, phase = phases[index];
-    fadeLabel(phase[0]);
-    if (!reduceMotion) {
-      orb.style.transitionDuration = phase[1] + "s";
-      void orb.offsetWidth;
-      orb.style.transform = "scale(" + phase[2] + ")";
-    }
-    index = (index + 1) % phases.length;
-    timer = setTimeout(runPhase, phase[1] * 1000);
+  function show(text) {
+    if (reduceMotion) { aff.textContent = text; return; }
+    aff.style.opacity = "0";
+    setTimeout(function () {
+      aff.textContent = text;
+      aff.style.opacity = "1";
+    }, 600);
   }
 
-  function start() {
-    if (timer) clearTimeout(timer);
-    index = 0;
-    if (!reduceMotion) {
-      orb.style.transitionDuration = "0s";
-      orb.style.transform = "scale(0.72)";
-      void orb.offsetWidth;
-    }
-    runPhase();
+  function next() { show(LINES[pick()]); }
+
+  function schedule() {
+    if (timer) clearInterval(timer);
+    timer = setInterval(next, 8000);
   }
 
-  toggle.addEventListener("click", function () {
-    current = current === "box" ? "478" : "box";
-    safeSet("breathPattern", current);
-    toggle.textContent = PATTERNS[current].other;
-    start();
+  function advance() { next(); schedule(); }
+
+  orb.addEventListener("click", advance);
+  orb.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); advance(); }
   });
 
-  toggle.textContent = PATTERNS[current].other;
-  start();
+  aff.textContent = LINES[pick()];
+  schedule();
 })();
 </script>
 </body>
