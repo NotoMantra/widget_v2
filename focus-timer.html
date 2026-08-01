@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Focus Timer</title>
+<style>
+  :root{
+    /* Notion orange, outline-only, transparent fills */
+    --orange:#D9730D;              /* Notion orange */
+    --orange-strong:#B85F08;       /* darker for large text contrast on white */
+    --orange-soft:rgba(217,115,13,.62);
+    --orange-faint:rgba(217,115,13,.16);
+    --orange-line:rgba(217,115,13,.30);
+    --orange-hover:rgba(217,115,13,.08);
+    --flash:rgba(217,115,13,.16);
+  }
+  *{box-sizing:border-box}
+  html,body{background:transparent}
+  body{
+    margin:0; color:var(--orange-strong);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    padding:16px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .card{
+    width:100%; max-width:360px; background:transparent;
+    border:1.5px solid var(--orange-line); border-radius:22px; padding:22px 22px 18px;
+  }
+  .head{text-align:center; margin-bottom:6px}
+  h1{margin:0; font-size:15px; font-weight:700; letter-spacing:.02em; color:var(--orange)}
+  .sub{margin:3px 0 0; font-size:12px; color:var(--orange-soft)}
+
+  .ring-wrap{position:relative; width:224px; height:224px; margin:14px auto 6px}
+  .dial{width:224px; height:224px; transform:rotate(-90deg)}
+  .ring-center{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:4px;
+  }
+  .time{
+    font-size:44px; font-weight:700; line-height:1; color:var(--orange-strong);
+    font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1;
+  }
+  .mode{
+    font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--orange-soft);
+  }
+
+  .rounds{text-align:center; font-size:12px; color:var(--orange-soft); margin:2px 0 0}
+  .rounds b{color:var(--orange); font-variant-numeric:tabular-nums}
+
+  .controls,.footer-row{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:16px}
+  button{
+    appearance:none; background:transparent; color:var(--orange);
+    border:1.5px solid var(--orange-line); padding:9px 16px; border-radius:12px;
+    font:inherit; font-size:14px; font-weight:600; cursor:pointer;
+    transition:background .18s, border-color .18s, opacity .18s;
+  }
+  button:hover{background:var(--orange-hover); border-color:var(--orange)}
+  button:focus-visible{outline:2px solid var(--orange); outline-offset:2px}
+  button.primary{border-width:2px; border-color:var(--orange); font-weight:700}
+  button:disabled{opacity:.5; cursor:not-allowed}
+
+  .settings{
+    margin-top:14px; border:1.5px solid var(--orange-line); border-radius:14px;
+    padding:14px; display:none; background:transparent;
+  }
+  .settings h3{margin:0 0 8px; font-size:13px; color:var(--orange); letter-spacing:.02em}
+  .row{display:flex; align-items:center; gap:10px; margin:8px 0; flex-wrap:wrap}
+  .label{min-width:88px; font-size:13px; color:var(--orange-strong)}
+  input[type="number"]{
+    width:88px; padding:8px 10px; border-radius:10px; border:1.5px solid var(--orange-line);
+    background:transparent; color:var(--orange-strong); font:inherit; outline:none;
+  }
+  input[type="number"]:focus{border-color:var(--orange)}
+  .hint{font-size:11px; color:var(--orange-soft)}
+
+  .flash{animation:flash .8s ease-out}
+  @keyframes flash{0%{background:var(--flash)}100%{background:transparent}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+  <div class="card" role="application" aria-label="Focus Timer">
+    <div class="head">
+      <h1>Focus Timer</h1>
+      <p class="sub">Pick one task. Start the clock. Work till it rings.</p>
+    </div>
+
+    <div class="ring-wrap">
+      <svg class="dial" viewBox="0 0 224 224" aria-hidden="true">
+        <circle cx="112" cy="112" r="102" fill="none" stroke="var(--orange-faint)" stroke-width="10"/>
+        <circle id="progress" cx="112" cy="112" r="102" fill="none" stroke="var(--orange)" stroke-width="10" stroke-linecap="round"/>
+      </svg>
+      <div class="ring-center">
+        <div id="time" class="time" role="status" aria-live="polite">25:00</div>
+        <div id="mode" class="mode">FOCUS</div>
+      </div>
+    </div>
+
+    <p class="rounds">Focus rounds today: <b id="rounds">0</b></p>
+
+    <div class="controls">
+      <button id="startPause" class="primary" aria-pressed="false"><span id="startPauseLabel">Start</span></button>
+      <button id="reset">Reset</button>
+      <button id="toggleSettings" aria-expanded="false" aria-controls="settings">Settings</button>
+    </div>
+
+    <div id="settings" class="settings" role="region" aria-label="Timer settings">
+      <h3>Timer settings</h3>
+      <div class="row">
+        <span class="label">Focus (min)</span>
+        <input id="workMin" type="number" min="5" max="90" step="1" />
+      </div>
+      <div class="row">
+        <span class="label">Break (min)</span>
+        <input id="breakMin" type="number" min="3" max="45" step="1" />
+      </div>
+      <div class="row">
+        <button id="save" class="primary">Save</button>
+        <button id="cancel">Cancel</button>
+      </div>
+      <p class="hint">Saved on this device.</p>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const timeEl=$("time"), modeEl=$("mode"), prog=$("progress"), roundsEl=$("rounds");
+  const startPauseBtn=$("startPause"), startPauseLabel=$("startPauseLabel");
+  const resetBtn=$("reset"), toggleSettingsBtn=$("toggleSettings"), panel=$("settings");
+  const workMin=$("workMin"), breakMin=$("breakMin"), saveBtn=$("save"), cancelBtn=$("cancel");
+
+  const KEY="focus_timer_orange_v1", ROUNDS_KEY="focus_timer_rounds_v1";
+  const R=102, CIRC=2*Math.PI*R;
+  prog.setAttribute("stroke-dasharray", String(CIRC));
+  prog.setAttribute("stroke-dashoffset", String(CIRC));
+
+  let S=load();
+  let rounds=loadRounds();
+  let timer=null;
+
+  init();
+
+  function init(){
+    workMin.value=S.work; breakMin.value=S.break;
+    roundsEl.textContent=rounds.count;
+    if(S.running) startTimer();
+    updateUI();
+    startPauseBtn.onclick=onStartPause;
+    resetBtn.onclick=onReset;
+    toggleSettingsBtn.onclick=onToggleSettings;
+    saveBtn.onclick=onSave;
+    cancelBtn.onclick=onCancel;
+    document.addEventListener("visibilitychange", onReturn);
+    window.addEventListener("focus", onReturn);
+  }
+
+  function onStartPause(){
+    S.running=!S.running;
+    startPauseBtn.setAttribute("aria-pressed", String(S.running));
+    if(S.running){ S.timestamp=Date.now(); tick(); timer=setInterval(tick,1000); }
+    else{ clearInterval(timer); timer=null; }
+    updateUI(); save();
+  }
+
+  function onReset(){
+    S.running=false; clearInterval(timer); timer=null;
+    S.remaining=(S.isWork?S.work:S.break)*60;
+    updateUI(); save();
+  }
+
+  function onToggleSettings(){
+    const open=panel.style.display==="block";
+    if(open){ panel.style.display="none"; toggleSettingsBtn.setAttribute("aria-expanded","false"); }
+    else{ workMin.value=S.work; breakMin.value=S.break; panel.style.display="block"; toggleSettingsBtn.setAttribute("aria-expanded","true"); }
+  }
+
+  function onSave(){
+    S.work=clamp(int(workMin.value,25),5,90);
+    S.break=clamp(int(breakMin.value,5),3,45);
+    S.remaining=(S.isWork?S.work:S.break)*60;
+    updateUI(); save(); onToggleSettings();
+  }
+  function onCancel(){ onToggleSettings(); }
+
+  function onReturn(){
+    if(!document.hidden && S.running){
+      const now=Date.now();
+      const dt=Math.floor((now-(S.timestamp||now))/1000);
+      if(dt>0) S.remaining=Math.max(0,S.remaining-dt);
+      S.timestamp=now; updateUI();
+      if(S.remaining===0) completePhase();
+    }
+  }
+
+  function tick(){
+    S.remaining=Math.max(0,S.remaining-1);
+    updateUI();
+    if(S.remaining===0){ completePhase(); return; }
+    S.timestamp=Date.now(); save();
+  }
+
+  function completePhase(){
+    clearInterval(timer); timer=null; S.running=false;
+    const card=document.querySelector(".card");
+    card.classList.add("flash");
+    setTimeout(()=>card.classList.remove("flash"),800);
+    // count a completed focus round
+    if(S.isWork){ rounds=bumpRounds(); roundsEl.textContent=rounds.count; }
+    S.isWork=!S.isWork;
+    S.remaining=(S.isWork?S.work:S.break)*60;
+    startPauseBtn.setAttribute("aria-pressed","false");
+    updateUI(); save();
+  }
+
+  function updateUI(){
+    timeEl.textContent=mmss(S.remaining);
+    modeEl.textContent=S.isWork?"FOCUS":"BREAK";
+    const total=(S.isWork?S.work:S.break)*60;
+    const frac=1-(S.remaining/Math.max(1,total));
+    prog.setAttribute("stroke-dashoffset", String(CIRC*frac));
+    startPauseLabel.textContent=S.running?"Pause":"Start";
+  }
+
+  function startTimer(){ tick(); timer=setInterval(tick,1000); }
+
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify({
+      work:S.work, break:S.break, isWork:S.isWork, remaining:S.remaining,
+      running:S.running, timestamp:S.timestamp||Date.now()
+    })); }catch(e){}
+  }
+  function load(){
+    try{
+      const raw=JSON.parse(localStorage.getItem(KEY)||"{}");
+      let work=clamp(int(raw.work,25),5,90);
+      let brk=clamp(int(raw.break,5),3,45);
+      let isWork=raw.isWork!==false;
+      let remaining=int(raw.remaining, work*60);
+      let running=!!raw.running;
+      let ts=raw.timestamp||Date.now();
+      if(running){
+        const dt=Math.floor((Date.now()-ts)/1000);
+        remaining=Math.max(0,remaining-dt);
+        if(remaining===0) running=false;
+      }
+      return {work, break:brk, isWork, remaining, running, timestamp:Date.now()};
+    }catch(e){
+      return {work:25, break:5, isWork:true, remaining:25*60, running:false, timestamp:Date.now()};
+    }
+  }
+  function loadRounds(){
+    try{
+      const raw=JSON.parse(localStorage.getItem(ROUNDS_KEY)||"{}");
+      if(raw.date===today()) return {date:raw.date, count:int(raw.count,0)};
+    }catch(e){}
+    return {date:today(), count:0};
+  }
+  function bumpRounds(){
+    const r={date:today(), count:(rounds.date===today()?rounds.count:0)+1};
+    try{ localStorage.setItem(ROUNDS_KEY, JSON.stringify(r)); }catch(e){}
+    return r;
+  }
+
+  function mmss(s){ const m=Math.floor(s/60), ss=s%60; return `${String(m).padStart(2,"0")}:${String(ss).padStart(2,"0")}`; }
+  function int(v,def){ v=Number(v); return Number.isFinite(v)?Math.floor(v):def; }
+  function clamp(v,min,max){ return Math.min(max,Math.max(min,v)); }
+  function today(){ return new Date().toISOString().slice(0,10); }
+})();
+</script>
+</body>
+</html>
