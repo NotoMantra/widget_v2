@@ -35,7 +35,7 @@ body{
 }
 .callout{
   width:100%;max-width:330px;border:1.5px solid var(--line);border-radius:10px;
-  background:var(--tint);padding:14px 16px 14px;
+  background:transparent;padding:14px 16px 14px;
 }
 .head{display:flex;align-items:center;gap:8px}
 .head svg{flex:none}
@@ -55,30 +55,30 @@ body{
 .wedge{
   --deg:150deg;
   background:
-    radial-gradient(circle at 38% 32%,rgba(255,255,255,.30),transparent 45%),
+    radial-gradient(circle at 38% 32%,rgba(255,255,255,.16),transparent 45%),
     radial-gradient(circle,var(--p-deep) 0%,var(--p) 62%,var(--p-soft) 100%);
   -webkit-mask:conic-gradient(#000 0 var(--deg),transparent 0);
           mask:conic-gradient(#000 0 var(--deg),transparent 0);
-  filter:drop-shadow(0 0 10px rgba(144,101,176,.35));
+  filter:drop-shadow(0 0 5px rgba(144,101,176,.16));
 }
 .face.idle .wedge{animation:breathe 4.5s ease-in-out infinite}
-@keyframes breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.025);opacity:.86}}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.012);opacity:.93}}
 .hand{
   position:absolute;left:calc(50% - 1px);top:calc(50% - 69px);width:2px;height:69px;
   background:var(--p-deep);transform-origin:50% 100%;border-radius:2px;
 }
 .hand::after{
   content:"";position:absolute;left:-4px;top:-5px;width:10px;height:10px;border-radius:50%;
-  background:var(--p-deep);box-shadow:0 0 0 3px var(--tint),0 0 12px var(--p);
+  background:var(--p-deep);box-shadow:0 0 5px rgba(144,101,176,.35);
 }
 .knob{
   position:absolute;left:calc(50% - 10px);top:calc(50% - 10px);width:20px;height:20px;
   border-radius:50%;border:1.5px solid var(--p-deep);background:var(--p-soft);
 }
 .ripple{position:absolute;inset:36px;border-radius:50%;border:1.5px solid var(--p);opacity:0;pointer-events:none}
-.face.done .ripple{animation:ripple 1.8s ease-out 2}
+.face.done .ripple{animation:ripple 2.4s ease-out 1}
 .face.done .ripple.r2{animation-delay:.6s}
-@keyframes ripple{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.45);opacity:0}}
+@keyframes ripple{0%{transform:scale(1);opacity:.28}100%{transform:scale(1.25);opacity:0}}
 
 .time{
   text-align:center;font-size:30px;font-weight:600;color:var(--p-deep);
@@ -200,7 +200,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--p);outline-offs
 
   /* ---------- dial ticks ---------- */
   (function(){
-    var svg = $("dial"), ns = "http://www.w3.org/2000/svg", out = "";
+    var svg = $("dial"), out = '<circle cx="100" cy="100" r="99" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".6"/>';
     for (var i=0;i<60;i++){
       var a = i*6*Math.PI/180, major = i%5===0;
       var r1 = 96, r2 = major ? 87 : 91;
