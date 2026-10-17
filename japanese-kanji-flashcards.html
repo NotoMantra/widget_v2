@@ -1,0 +1,1186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kanji Flashcards</title>
+<style>
+:root{
+  --bg:#f7f0e3;
+  --card:#fbf6ec;
+  --line:#dcc6a3;
+  --line-soft:#e9dbc2;
+  --ink:#8c6c45;
+  --ink-soft:#ae936f;
+  --ink-faint:#c7b291;
+  --good:#9aa57a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple SD Gothic Neo","Malgun Gothic","Hiragino Sans","Yu Gothic","Noto Sans CJK JP","Noto Sans KR",sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+.wrap{container-type:inline-size;height:100%;min-height:210px;padding:4px}
+.w{height:100%;display:flex;flex-direction:column;gap:10px;background:var(--bg);border:3px solid var(--line);border-radius:20px;padding:14px 14px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;gap:6px;flex-shrink:0}
+button{font:inherit;color:var(--ink);background:transparent;border:2px solid var(--line);border-radius:999px;cursor:pointer;transition:background .15s,border-color .15s,transform .1s;-webkit-tap-highlight-color:transparent}
+button:hover{background:var(--card);border-color:var(--ink-faint)}
+button:active{transform:scale(.96)}
+button:focus-visible{outline:2px solid var(--ink-soft);outline-offset:2px}
+.chip{font-size:11px;font-weight:600;padding:4px 10px;letter-spacing:.04em}
+.icon{width:28px;height:28px;display:grid;place-items:center;padding:0}
+.icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card{flex:1;min-height:110px;position:relative;container-type:size;background:var(--card);border:2px solid var(--line-soft);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px 12px;cursor:pointer;user-select:none;overflow:hidden}
+.front{font-family:"Iowan Old Style","Palatino Linotype",Georgia,"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:clamp(20px,min(9cqi,17cqh),44px);line-height:1.15;font-weight:500;color:var(--ink);word-break:keep-all;overflow-wrap:anywhere}
+.front.big{font-size:clamp(36px,min(22cqi,30cqh),88px);line-height:1}
+.front.en{font-family:inherit;font-size:clamp(16px,min(6.5cqi,13cqh),30px);font-weight:600}
+.back{gap:2px;margin-top:min(10px,3cqh);display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s}
+.card.open .back{opacity:1;transform:none}
+.meaning{font-size:clamp(13px,min(4.6cqi,9cqh),19px);font-weight:600;color:var(--ink)}
+.meaning.native{font-family:"Iowan Old Style",Georgia,"Hiragino Mincho ProN","Yu Mincho","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:clamp(18px,min(8cqi,15cqh),36px);font-weight:500}
+.sub{font-size:12px;color:var(--ink-soft);line-height:1.5}
+.sub b{font-weight:600;color:var(--ink-soft);letter-spacing:.04em;margin-right:3px}
+.hint{position:absolute;bottom:8px;left:0;right:0;font-size:11px;color:var(--ink-faint);transition:opacity .2s}
+.card.open .hint{opacity:0}
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;border:1.5px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink-soft)}
+.actions{display:flex;gap:8px}
+.actions button{flex:1;padding:9px 6px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+.actions .know{background:var(--card)}
+.actions svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.prog{display:flex;align-items:center;gap:8px}
+.bar{flex:1;height:6px;border-radius:99px;background:var(--line-soft);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ink-faint);border-radius:99px;transition:width .3s}
+.count{font-size:11px;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+.menu{position:absolute;inset:0;background:var(--bg);border-radius:12px;padding:14px;display:none;flex-direction:column;gap:10px;justify-content:center;cursor:default;text-align:left;z-index:2}
+.menu.show{display:flex}
+.menu h4{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.menu p{font-size:12px;color:var(--ink-soft);line-height:1.5}
+.menu .row{display:flex;gap:8px;flex-wrap:wrap}
+.menu .row button{font-size:12px;font-weight:600;padding:6px 12px}
+.menu .credit{font-size:10px;color:var(--ink-faint)}
+.done{font-size:15px;font-weight:600}
+/* compact: narrow columns */
+@container (max-width:300px){
+  .w{padding:10px;gap:8px;border-radius:16px}
+  .tag{font-size:10px}
+  .wc{display:none}
+  .chip{padding:3px 8px;font-size:10px}
+  .actions button span{display:none}
+  .actions button{padding:8px 4px}
+  .hint{display:none}
+  .sub{font-size:11px}
+}
+@container (max-width:200px){
+  .count{display:none}
+  .tools .icon{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="w" id="app">
+  <div class="top">
+    <div class="tag" id="tag">Kanji<span class="wc"> · 1,000 words</span></div>
+    <div class="tools">
+      <button class="chip" id="dir" title="Switch direction" aria-label="Switch direction"></button>
+      <button class="icon" id="more" title="Options" aria-label="Options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+    </div>
+  </div>
+  <div class="card" id="card" role="button" tabindex="0" aria-label="Flashcard, tap to reveal">
+    <div class="front" id="front"></div>
+    <div class="back" id="back"></div>
+    <div class="hint" id="hint">tap to reveal</div>
+    <div class="menu" id="menu">
+      <h4>Options</h4>
+      <p id="menuinfo"></p>
+      <div class="row">
+        <button id="reset">Reset progress</button>
+        <button id="close">Close</button>
+      </div>
+      <p class="credit">Saved only in this browser. Nothing is sent anywhere. Kanji data from KANJIDIC, © EDRDG, CC BY-SA 4.0.</p>
+    </div>
+  </div>
+  <div class="actions">
+    <button id="again" aria-label="Show again later"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><span>Again</span></button>
+    <button id="know" class="know" aria-label="I know this"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span>Know it</span></button>
+  </div>
+  <div class="prog"><div class="bar"><i id="barfill"></i></div><div class="count" id="count"></div></div>
+</div>
+</div>
+<script type="text/plain" id="data">
+日|sun, day, japan|にち・じつ|ひ|N5
+一|one|いち・いつ|ひと・ひとつ|N5
+国|country|こく|くに|N5
+会|meet, meeting, party|かい・え|あう・あわせる|N4
+人|person|じん・にん|ひと|N5
+年|year, counter for years|ねん|とし|N5
+大|big, large|だい・たい|おお・おおきい|N5
+十|ten|じゅう・じっ|とお・と|N5
+二|two|に・じ|ふた・ふたつ|N5
+本|book, origin, real|ほん|もと|N5
+中|middle, in, inside|ちゅう|なか・うち|N5
+長|long, leader, superior|ちょう|ながい・おさ|N5
+出|exit, leave, go out|しゅつ・すい|でる・だす|N5
+三|three|さん・ぞう|み・みつ|N5
+同|same, agree, equal|どう|おなじ|N4
+時|time, o'clock, hour|じ|とき|N5
+政|politics, government|せい・しょう|まつりごと|N3
+事|action, matter, thing|じ・ず|こと・つかう|N4
+自|self, oneself|じ・し|みずから・おのずから|N4
+行|go, going, journey|こう・ぎょう|いく・ゆく|N5
+社|company, firm, office|しゃ|やしろ|N4
+見|see, hopes, chances|けん|みる・みえる|N5
+月|moon, month|げつ・がつ|つき|N5
+分|part, minute, separate|ぶん・ふん|わける・わけ
+議|deliberation, discussion, consultation|ぎ||N3
+後|behind, after, back|ご・こう|のち・うしろ|N5
+前|front, before, in front|ぜん|まえ|N5
+民|peoples, people, nation|みん|たみ|N3
+生|life, genuine, birth|せい・しょう|いきる・いかす|N5
+連|take along, lead, join|れん|つらなる・つらねる|N3
+五|five|ご|いつ・いつつ|N5
+発|departure, discharge, publish|はつ・ほつ|たつ・あばく|N4
+間|interval, space, time|かん・けん|あいだ・ま|N5
+対|versus, opposite, vis-a-vis|たい・つい||N3
+上|above, up, over|じょう・しょう|うえ・うわ|N5
+部|part, department, club|ぶ||N3
+東|east|とう|ひがし|N5
+者|someone, somebody, person|しゃ|もの|N4
+党|group, party, faction|とう||N2
+地|earth, ground|ち・じ||N4
+合|suit, fit, join|ごう・がっ|あう・あい|N3
+市|city, market, town|し|いち|N3
+業|business, vocation, arts|ぎょう・ごう|わざ|N4
+内|inside, within, between|ない・だい|うち|N3
+相|mutual, inter-, together|そう・しょう|あい|N3
+方|direction, way, person|ほう|かた|N4
+四|four|し|よ・よつ|N5
+定|determine, fix, establish|てい・じょう|さだめる・さだまる|N3
+今|now|こん・きん|いま|N5
+回|times, revolve, -times|かい・え|まわる・まわす|N3
+新|new|しん|あたらしい・あらた|N4
+場|location, place|じょう・ちょう|ば|N4
+金|gold|きん・こん|かね・かな|N5
+員|member, employee, number|いん||N4
+九|nine|きゅう・く|ここの・ここのつ|N5
+入|enter, insert|にゅう・じゅ|いる・いれる|N5
+選|choose, elect, select|せん|えらぶ|N3
+立|stand, stand up, rise|りつ・りゅう|たつ・たち|N4
+開|open, unfold, unseal|かい|ひらく・ひらき|N4
+手|hand|しゅ・ず|て・た|N4
+米|rice, america, usa|べい・まい|こめ・よね|N3
+力|power, strength, strong|りょく・りき|ちから|N4
+学|study, learn, learning|がく|まなぶ|N5
+問|problem, question, ask|もん|とう・とい|N4
+高|tall, expensive, high|こう|たかい・たか|N5
+代|substitute, replace, period|だい・たい|かわる・かわり|N4
+明|bright, light|めい・みょう|あかり・あかるい|N4
+実|truth, reality|じつ・しつ|み・みのる|N3
+円|yen, round, circle|えん|まるい・まる|N5
+関|related, connected, connection|かん|せき・かかわる|N3
+決|decide, decision, fix|けつ|きめる・きまる|N3
+子|child, kid, sign of the rat|し・す|こ・ね|N5
+動|move, motion, change|どう|うごく・うごかす|N4
+京|capital|きょう・けい|みやこ|N4
+全|all, whole, entire|ぜん|まったく・すべて|N3
+目|eye, class, look|もく・ぼく|め・ま|N4
+表|express, surface, table|ひょう|おもて・あらわす|N3
+戦|war, battle, match|せん|いくさ・たたかう|N3
+経|passage of time, pass through, manage|けい・きょう|へる・たつ|N3
+通|pass through, traffic, avenue|つう・つ|とおる・とおり|N4
+外|outside|がい・げ|そと・ほか|N5
+最|most, utmost, extreme|さい・しゅ|もっとも・つま|N3
+言|say, word|げん・ごん|いう・こと|N4
+氏|family name, last name, surname|し|うじ|N1
+現|present time, present, existing|げん|あらわれる・あらわす|N3
+理|reason, logic, arrangement|り|ことわり|N4
+調|investigate, tone, tune|ちょう|しらべる・しらべ|N3
+体|body, substance, object|たい・てい|からだ・かたち|N4
+化|change, take the form of, influence|か・け|ばける・ばかす|N3
+田|rice paddy, rice field, field|でん|た|N4
+当|correct, right, success|とう|あたる・あたり|N3
+八|eight|はち|や・やつ|N5
+六|six|ろく・りく|む・むつ|N5
+約|promise, approximately, shrink|やく|つづまる・つづめる|N3
+主|master, main, lord|しゅ・す|ぬし・おも|N4
+題|topic, subject|だい||N4
+下|below, down, under|か・げ|した・しも|N5
+首|neck, counter for songs and poems|しゅ|くび|N3
+意|idea, mind, heart|い||N4
+法|method, law, rule|ほう・はっ|のり|N3
+不|not, negative, non-|ふ・ぶ||N4
+来|come, next, due|らい・たい|くる・きたる|N5
+作|make, production, prepare|さく・さ|つくる・つくり|N4
+性|gender, nature, sex|せい・しょう|さが|N3
+的|target, mark, -like|てき|まと
+要|need, main point, essence|よう|いる・かなめ|N3
+用|task, use, utilize|よう|もちいる|N4
+制|control, system, law|せい||N3
+治|cure, heal, reign|じ・ち|おさめる・おさまる|N3
+度|degrees, occurrence, time|ど・と|たび|N4
+務|task, duties|む|つとめる|N3
+強|strong, strength|きょう・ごう|つよい・つよまる|N4
+気|energy, spirit, mind|き・け|いき|N5
+小|small, little|しょう|ちいさい・こ|N5
+七|seven|しち|なな・ななつ|N5
+成|become, turn into, get|せい・じょう|なる・なす|N3
+期|period of time, time period, period|き・ご||N3
+公|public, prince, official|こう・く|おおやけ|N4
+持|hold, have|じ|もつ・もてる|N4
+野|field, plains, rustic|や・しょ|の|N4
+協|cooperation, co-|きょう||N2
+取|take, fetch, take up|しゅ|とる・とり|N3
+都|metropolis, capital, all|と・つ|みやこ|N3
+和|peace, japanese style, harmony|わ・お|やわらぐ・やわらげる|N3
+統|unite, overall, relationship|とう|すべる|N1
+以|from, since, compared with|い|もって|N4
+機|machine, loom, mechanism|き|はた|N3
+平|flat, peace, even|へい・びょう|たいら・ひら|N3
+総|whole, general, all|そう|すべて・ふさ|N2
+加|add, addition, increase|か|くわえる・くわわる|N3
+山|mountain|さん・せん|やま|N5
+思|think, thought|し|おもう・おもえらく|N4
+家|house, home, family|か・け|いえ・や|N4
+話|talk, speak, tale|わ|はなす・はなし|N5
+世|world, generation, society|せい・せ|よ|N4
+受|accept, receive, undergo|じゅ|うける・うかる|N3
+区|district, ward|く・おう||N2
+領|territory, jurisdiction, dominion|りょう|えり|N2
+多|many, much, lots of|た|おおい・まさに|N4
+県|prefecture|けん|かける|N2
+続|continue, series, sequel|ぞく・しょく|つづく・つづける|N3
+進|advance, proceed, progress|しん|すすむ・すすめる|N3
+正|correct, justice, righteous|せい・しょう|ただしい・ただす|N4
+安|relax, cheap, low|あん|やすい・やすまる|N4
+設|establish, establishment, provision|せつ|もうける|N2
+保|preserve, guarantee, protect|ほ・ほう|たもつ|N1
+改|renew, reformation, change|かい|あらためる・あらたまる|N2
+数|count, number, amount|すう・す|かず・かぞえる|N3
+記|write down, record, scribe|き|しるす|N3
+院|institution, inst., temple|いん||N4
+女|woman, female|じょ・にょ|おんな・め|N5
+初|first, first time, beginning|しょ|はじめ・はじめて|N3
+北|north|ほく|きた|N5
+午|noon, sign of the horse, 11am-1pm|ご|うま|N5
+指|finger, point to, indicate|し|ゆび・さす|N3
+権|rights, authority, power|けん・ごん||N3
+心|heart, mind, spirit|しん|こころ|N4
+界|world, boundary|かい||N4
+支|support, branch, sustain|し|ささえる・つかえる|N3
+第|ordinal number prefix|だい・てい||N1
+産|give birth, birth, products|さん|うむ・うまれる|N3
+結|bind, tie, contract|けつ・けち|むすぶ・ゆう|N1
+百|hundred|ひゃく・びゃく|もも|N5
+派|sect, faction, group|は||N1
+点|point, decimal, decimal point|てん|つける・つく|N3
+教|teach, faith, doctrine|きょう|おしえる・おそわる|N4
+報|news, report, reward|ほう|むくいる|N3
+済|come to an end, settle (debt, etc.), relieve (burden)|さい・せい|すむ・すまない|N3
+書|write, writing|しょ|かく|N5
+府|government, borough, urban prefecture|ふ||N2
+活|lively, resuscitation, being helped|かつ|いきる・いかす|N3
+原|original, fundamental, field|げん|はら|N3
+先|previous, ahead, past|せん|さき・まず|N5
+共|together, both, neither|きょう|とも・ともに|N3
+得|acquire, gain, get|とく|える・うる|N3
+解|untie, solve, unravel|かい・げ|とく・とかす|N3
+名|name, famous, noted|めい・みょう|な|N5
+交|mix, mingle, mixing|こう|まじわる・まじえる|N3
+資|resources, assets, capital|し||N3
+予|beforehand, previous, myself|よ・しゃ|あらかじめ|N3
+川|river, stream|せん|かわ|N5
+向|yonder, facing, beyond|こう|むく・むい|N3
+際|occasion, side, edge|さい|きわ|N3
+査|inspect, investigate, inspection|さ||N2
+勝|win, victory, prevail|しょう|かつ・まさる|N3
+面|face, surface, mask|めん・べん|おも・おもて|N3
+委|committee, entrust to, leave to|い|ゆだねる|N2
+告|announce, revelation, tell|こく|つげる|N3
+軍|army, force, troops|ぐん|いくさ|N2
+文|writing, sentence, literature|ぶん・もん|ふみ・あや|N4
+反|anti, anti-|はん・ほん|そる・そらす|N3
+元|origin, beginning, former time|げん・がん|もと|N4
+重|heavy, important, esteem|じゅう・ちょう|え・おもい|N4
+近|near, close, early|きん・こん|ちかい|N4
+千|thousand|せん|ち|N5
+考|think, consider, think over|こう|かんがえる・かんがえ|N4
+判|judge, judgement, signature|はん・ばん|わかる|N3
+認|recognize, acknowledge, witness|にん|みとめる・したためる|N3
+画|drawing, picture, painting|が・かく|えがく・かくする|N4
+海|sea, ocean|かい|うみ|N4
+参|participate, nonplussed, three (in documents)|さん・しん|まいる・まい|N3
+売|sell|ばい|うる・うれる|N4
+利|profit, benefit, advantage|り|きく|N3
+組|group, association, team|そ|くむ・くみ|N3
+知|know, wisdom|ち|しる・しらせる|N4
+案|plan, suggestion, draft|あん|つくえ|N1
+道|road, street, path|どう・とう|みち・いう|N4
+信|believe, trust, faith|しん||N3
+策|plan, scheme, policy|さく||N1
+集|collect, gather, meet|しゅう|あつまる・あつめる|N4
+在|exist, outskirts, suburbs|ざい|ある|N3
+件|matter, affair, case|けん|くだん|N3
+団|group, association|だん・とん|かたまり・まるい|N2
+別|separate, branch off, diverge|べつ|わかれる・わける|N4
+物|thing, object, matter|ぶつ・もつ|もの|N4
+側|side, lean, oppose|そく|かわ・がわ|N3
+任|duty, responsibility, term|にん|まかせる・まかす|N3
+引|pull, tug, jerk|いん|ひく・ひき|N3
+使|use, send on a mission, order|し|つかう・つかい|N4
+求|request, want, wish for|きゅう・ぐ|もとめる|N3
+所|place, extent|しょ|ところ・どころ|N3
+次|next, order, sequence|じ・し|つぐ・つぎ|N3
+水|water|すい|みず|N5
+半|half, middle, odd number|はん|なかば|N5
+品|product, article, goods|ひん・ほん|しな|N4
+昨|previous, yesterday|さく||N3
+論|theory, argument, discourse|ろん||N3
+計|measure, measurement, plot|けい|はかる・はからう|N4
+死|death, die|し|しぬ・しに|N4
+官|government, bureaucrat, the government|かん||N3
+増|increase, add, augment|ぞう|ます・まし|N3
+係|connection, person in charge, duty|けい|かかる・かかり|N3
+感|feeling, emotion, sensation|かん||N3
+特|special|とく||N4
+情|feeling, emotion, feelings|じょう・せい|なさけ|N3
+投|throw, discard, abandon|とう|なげる|N3
+示|indicate, show, point out|じ・し|しめす|N3
+変|change, strange, unusual|へん|かわる・かわり|N3
+打|hit, strike, knock|だ|うつ・うち|N3
+男|man, male|だん・なん|おとこ・お|N5
+基|foundation, fundamentals, counter for machines|き|もと・もとい|N1
+私|i, private, me|し|わたくし・わたし|N4
+各|each, every, either|かく|おのおの|N2
+始|begin, start, commence|し|はじめる・はじまる|N4
+島|island|とう|しま|N2
+直|fix, direct, straightaway|ちょく・じき|ただちに・なおす|N3
+両|both, old japanese coin, counter for carriages (e.g., in a train)|りょう|ふたつ|N3
+朝|morning, dynasty, regime|ちょう|あさ|N4
+革|leather, skin, reform|かく|かわ|N2
+価|value, price|か・け|あたい|N1
+式|ritual, ceremony, equation|しき||N3
+確|certain, assurance, firm|かく・こう|たしか・たしかめる|N3
+村|village, town|そん|むら|N2
+提|present, submit, propose|てい・ちょう|さげる|N1
+運|carry, luck, destiny|うん|はこぶ|N4
+終|end, finish|しゅう|おわる・おえる|N4
+挙|raise, plan, project|きょ|あげる・あがる|N1
+果|fruit, reward, carry out|か|はたす・はてる|N3
+西|west, spain|せい・さい|にし|N5
+勢|force, forces, energy|せい・ぜい|いきおい・はずみ|N2
+減|decrease, dwindle, reduce|げん|へる・へらす|N2
+台|machine, pedestal, a stand|だい・たい|うてな・われ|N4
+広|wide, broad, spacious|こう|ひろい・ひろまる|N4
+容|form, appearance, shape|よう|いれる|N3
+必|certain, invariably, inevitable|ひつ|かならず|N3
+応|respond, apply, answer|おう・よう|あたる・まさに|N1
+演|perform, performance, act|えん||N3
+電|electricity|でん||N5
+歳|years old, year-end, age|さい・せい|とし・とせ|N3
+住|dwelling, reside, dwell|じゅう・ぢゅう|すむ・すまう|N4
+争|conflict, contend, dispute|そう|あらそう・いかでか|N3
+談|discuss, talk|だん||N3
+能|ability, talent, skill|のう|よく|N3
+無|nothing, nothingness, none|む・ぶ|ない
+再|again, twice, second time|さい・さ|ふたたび|N2
+位|rank, grade, throne|い|くらい・ぐらい|N3
+置|put, placement, set|ち|おく|N3
+企|plan, undertake, scheme|き|くわだてる・たくらむ|N1
+真|reality, true, buddhist sect|しん|ま・まこと|N4
+流|stream, current, a sink|りゅう・る|ながれる・ながれ|N3
+格|status, rank, capacity|かく・こう||N3
+有|have, possess, exist|ゆう・う|ある|N4
+疑|doubt, distrust, be suspicious|ぎ|うたがう|N3
+口|mouth|こう・く|くち|N4
+過|surpass, overdo, exceed|か|すぎる・すごす|N3
+局|bureau, department, board|きょく|つぼね|N3
+少|few, a little, little|しょう|すくない・すこし|N4
+放|release, set free, fire|ほう|はなす・はなつ|N3
+税|tax, duty|ぜい||N2
+検|examine, examination, investigate|けん|しらべる|N1
+藤|wisteria|とう・どう|ふじ|N1
+町|town, village, block|ちょう|まち|N4
+常|ordinary, normal, usual|じょう|つね・とこ|N3
+校|school, exam, printing|こう・きょう||N5
+料|fee, material, materials|りょう||N4
+沢|swamp, marsh, brilliance|たく|さわ・うるおい|N1
+裁|judge, tailor, decision|さい|たつ・さばく|N1
+状|condition, status quo, conditions|じょう||N3
+工|construction, industry, craft|こう・く||N4
+建|build, construct|けん・こん|たてる・たて|N4
+語|language, word, speech|ご|かたる・かたらう|N5
+球|sphere, ball|きゅう|たま|N3
+営|manage, occupation, camp|えい|いとなむ・いとなみ|N2
+空|sky, empty, void|くう|そら・あく|N4
+職|employment, post, work|しょく・そく||N3
+証|evidence, proof, certificate|しょう|あかし|N1
+土|dirt, soil, earth|ど・と|つち|N5
+与|give, bestow, participate in|よ|あたえる・あずかる|N3
+急|hurry, emergency, sudden|きゅう|いそぐ・いそぎ|N4
+止|stop, halt|し|とまる・とめる|N4
+送|send, escort|そう|おくる|N4
+援|aid, assist, abet|えん||N1
+供|servant, companion, submit|きょう・く|そなえる・とも|N3
+可|possible, passable, can|か・こく
+役|service, duty, war|やく・えき||N3
+構|set up, care, posture|こう|かまえる・かまう|N3
+木|tree, wood|ぼく・もく|き・こ|N5
+割|divide, proportion, comparatively|かつ|わる・わり|N3
+聞|hear, ask, listen|ぶん・もん|きく・きこえる|N5
+身|somebody, someone, body|しん|み
+費|expense, cost, spend|ひ|ついやす・ついえる|N3
+付|attach, adhere, refer to|ふ|つける・つけ|N3
+施|carry out, give, bestow|し・せ|ほどこす|N1
+切|cut, cutoff, be sharp|せつ・さい|きる・きり|N4
+由|reason, wherefore, a reason|ゆ・ゆう|よし・よる|N3
+説|theory, opinion, explanation|せつ・ぜい|とく|N3
+転|revolve, turn around, change|てん|ころがる・ころげる|N4
+食|eat, meal, food|しょく・じき|くう・くらう|N5
+比|compare, race, ratio|ひ|くらべる|N2
+難|difficult, impossible, trouble|なん|かたい・むずかしい|N3
+防|prevent, prevention, ward off|ぼう|ふせぐ|N2
+補|supplement, supply, make good|ほ|おぎなう|N2
+車|car|しゃ|くるま|N5
+優|superior, gentle, tenderness|ゆう・う|やさしい・すぐれる|N3
+夫|husband, man|ふ・ふう|おっと・それ|N3
+研|sharpen, polish, study of|けん|とぐ|N4
+収|obtain, income, reap|しゅう|おさめる・おさまる|N3
+断|cut off, severance, decline|だん|たつ・ことわる|N3
+井|well, well crib, town|せい・しょう|い|N1
+何|what|か|なに・なん|N5
+南|south|なん・な|みなみ|N5
+石|stone|せき・しゃく|いし|N3
+足|foot, leg, sufficient|そく|あし・たりる|N4
+違|different, difference, differ|い|ちがう・ちがい|N3
+消|extinguish, blow out, turn off|しょう|きえる・けす|N3
+境|boundary, border, region|きょう・けい|さかい|N2
+神|god, gods, mind|しん・じん|かみ・かん|N3
+番|number in a series, turn, ordinal number|ばん|つがい|N3
+規|standard, measure|き||N3
+術|art, technique, skill|じゅつ|すべ|N3
+護|defend, safeguard, protect|ご|まもる|N1
+展|expand, unfold|てん||N1
+態|appearance, attitude, condition|たい|わざと|N1
+導|lead, guidance, leading|どう|みちびく|N2
+鮮|fresh, vivid, clear|せん|あざやか|N1
+備|provide, equip, provision|び|そなえる・そなわる|N3
+宅|house, home, residence|たく||N3
+害|damage, injury, harm|がい||N3
+配|distribute, spouse, exile|はい|くばる|N3
+副|vice, side, vice-|ふく||N2
+算|calculate, calculation, divining|さん|そろ|N2
+視|look at, inspection, regard as|し|みる|N1
+条|clause, article, item|じょう・ちょう|えだ・すじ|N1
+幹|tree trunk, main part, talent|かん|みき|N1
+独|alone, single, spontaneously|どく・とく|ひとり|N1
+警|warn, admonish, commandment|けい|いましめる|N3
+宮|shinto shrine, shrine, palace|きゅう・ぐう|みや|N1
+究|research, study|きゅう・く|きわめる|N4
+育|nurture, raise, bring up|いく|そだつ・そだち|N3
+席|seat, mat, occasion|せき|むしろ|N3
+輸|transport, send, be inferior|ゆ・しゅ||N2
+訪|visit, call on, look up|ほう|おとずれる・たずねる|N3
+楽|comfort, ease, pleasure|がく・らく|たのしい・たのしむ|N4
+起|wake up, rouse, get up|き|おきる・おこる|N4
+万|ten thousand, 10,000|まん・ばん|よろず|N5
+着|wear, arrive, don|ちゃく・じゃく|きる・きせる|N4
+乗|ride, power, multiplication|じょう・しょう|のる・のせる|N3
+店|shop, store|てん|みせ・たな|N4
+述|mention, state, speak|じゅつ|のべる|N2
+残|remainder, leftover, balance|ざん・さん|のこる・のこす|N3
+想|concept, think, idea|そう・そ|おもう|N3
+線|line, track|せん|すじ|N2
+率|percent, percentage, ratio|そつ・りつ|ひきいる|N1
+病|sick, sickness, ill|びょう・へい|やむ・やまい|N4
+農|farming, agriculture, farmers|のう||N2
+州|state, province, county|しゅう・す|す|N2
+武|military, warrior, chivalry|ぶ・む|たけ・たけし|N2
+声|voice|せい・しょう|こえ・こわ|N3
+質|quality, substance, matter|しつ・しち|たち・ただす|N4
+念|thought, wish, sense|ねん||N3
+待|wait, depend on|たい|まつ|N4
+試|try, attempt, test|し|こころみる・ためす|N4
+族|tribe, family|ぞく||N4
+象|elephant, phenomenon, pattern after|しょう・ぞう|かたどる|N2
+銀|silver|ぎん|しろがね|N4
+域|region, boundary, range|いき||N2
+助|help, rescue, assist|じょ|たすける・たすかる|N3
+労|labor, thank for, reward for|ろう|ろうする・いたわる|N3
+例|example, custom, usage|れい|たとえる|N3
+衛|defense, protection|えい・え||N1
+然|nature, sort of thing, so|ぜん・ねん|しか・しかり|N3
+早|early, fast, quick|そう・さっ|はやい・はや|N4
+張|stretch, lengthen, counter for bows & stringed instruments|ちょう|はる|N1
+映|reflect, reflection, projection|えい|うつる・うつす|N4
+限|limit, restrict, to best of ability|げん|かぎる・かぎり|N3
+親|parent, intimacy, relative|しん|おや・したしい|N4
+額|amount, framed picture, forehead|がく|ひたい|N2
+監|oversee, official, govt office|かん||N1
+環|loop, ring, circle|かん|わ|N1
+験|test, verification, effect|けん・げん|あかし・しるし|N4
+追|follow, chase, drive away|つい|おう|N3
+審|judge, hearing, trial|しん|つまびらか・つぶさに|N1
+商|merchandise, make a deal, selling|しょう|あきなう|N3
+葉|leaf, leaves, plane|よう|は|N3
+義|righteousness, justice, morality|ぎ||N1
+伝|transmit, tell, go along|でん・てん|つたわる・つたえる|N3
+働|work, labor, (kokuji)|どう|はたらく|N3
+形|shape, form, appearance|けい・ぎょう|かた・かたち|N3
+景|scene, scenery, view|けい||N3
+落|fall, drop, come down|らく|おちる・おち|N3
+欧|europe|おう|うたう・はく|N2
+担|carry, bear, shouldering|たん|かつぐ・になう|N2
+好|like, fond, pleasing|こう|このむ・すく|N3
+退|retreat, reject, withdraw|たい|しりぞく・しりぞける|N3
+準|standard, semi-, correspond to|じゅん|じゅんじる・じゅんずる|N2
+賞|prize, reward, praise|しょう|ほめる|N2
+訴|sue, accusation, complain of pain|そ|うったえる|N1
+辺|area, environs, boundary|へん|あたり・ほとり|N2
+造|create, make, structure|ぞう|つくる・つくり|N2
+英|england, english, hero|えい|はなぶさ|N4
+被|incur, cover, veil|ひ|こうむる・おおう|N2
+株|stocks, shares, stump|しゅ|かぶ|N1
+頭|head, counter for large animals|とう・ず|あたま・かしら|N3
+技|skill, art, craft|ぎ|わざ|N2
+低|low, lower, short|てい|ひくい・ひくめる|N2
+毎|every|まい|ごと|N5
+医|medicine, doctor|い|いやす・いする|N4
+復|restore, return to, revert|ふく|また|N2
+仕|doing, do, attend|し・じ|つかえる|N4
+去|past, gone, quit|きょ・こ|さる|N4
+姿|figure, shape, form|し|すがた|N1
+味|flavor, taste|み|あじ・あじわう|N4
+負|lose, defeat, negative|ふ|まける・まかす|N3
+閣|the cabinet, cabinet, tower|かく||N1
+韓|korea|かん|から・いげた
+渡|transit, ford, ferry|と|わたる・わたす|N3
+失|fault, lose, error|しつ|うしなう・うせる|N3
+移|shift, move, change|い|うつる・うつす|N2
+差|distinction, difference, variation|さ|さす・さし|N3
+衆|populace, masses, great numbers|しゅう・しゅ|おおい|N1
+個|individual, counter for articles|こ・か||N2
+門|gates, gate, counter for cannons|もん|かど・と|N2
+写|copy, be photographed, describe|しゃ・じゃ|うつす・うつる|N4
+評|evaluate, criticism, comment|ひょう||N1
+課|section, chapter, lesson|か||N2
+末|end, close, tip|まつ・ばつ|すえ|N3
+守|protect, guard, defend|しゅ・す|まもる・まもり|N3
+若|young, if, perhaps|じゃく・にゃく|わかい・わか|N3
+脳|brain, memory|のう・どう|のうずる|N2
+極|extreme, poles, settlement|きょく・ごく|きわめる・きわまる|N2
+種|kind, type, species|しゅ|たね|N3
+美|beauty, beautiful|び・み|うつくしい|N3
+岡|hill, mount, knoll|こう|おか
+影|shadow, silhouette, phantom|えい|かげ|N1
+命|fate, command, decree|めい・みょう|いのち|N3
+含|include, contain, hold in the mouth|がん|ふくむ・ふくめる|N2
+福|luck, fortune, blessing|ふく||N3
+蔵|storehouse, hide, own|ぞう・そう|くら・おさめる|N2
+量|quantity, amount, measure|りょう|はかる|N2
+望|hope, ambition, full moon|ぼう・もう|のぞむ・もち|N3
+松|pine, pine tree|しょう|まつ|N1
+非|injustice, negative, mistake|ひ|あらず|N3
+撃|attack, beat, defeat|げき|うつ|N1
+佐|help, assistant|さ||N1
+核|nucleus, core, kernel|かく||N1
+観|view, outlook, look|かん|みる・しめす|N3
+察|guess, presume, surmise|さつ||N3
+整|arrange, organize, arranging|せい|ととのえる・ととのう|N1
+段|steps, stairs, grade|だん・たん||N3
+横|side, horizontal, sideways|おう|よこ|N3
+融|dissolve, melt|ゆう|とける・とかす|N1
+型|model, type, mould|けい|かた|N2
+白|white|はく・びゃく|しろ・しら|N5
+深|deep, heighten, intensify|しん|ふかい・ふかまる|N3
+字|letter, character, symbol|じ|あざ・あざな|N4
+答|answer, response, reply|とう|こたえる・こたえ|N4
+夜|night, evening|や|よ・よる|N4
+製|manufacture, made in...|せい||N1
+票|ballot, label, ticket|ひょう||N1
+況|condition, situation|きょう|まして・いわんや|N2
+音|sound, noise|おん・いん|おと・ね|N4
+申|say humbly, say, humbly say|しん|もうす・もうし|N3
+様|formal name title, formal name ender, manner|よう・しょう|さま・さん|N3
+財|wealth, property, money|ざい・さい|たから|N3
+港|harbor, port, harbour|こう|みなと|N3
+識|discerning, discriminating, know|しき|しる・しるす|N3
+注|pour, irrigate, shed (tears)|ちゅう|そそぐ・さす|N4
+呼|call, call out to, invite|こ|よぶ|N3
+渉|ford, go cross, transit|しょう|わたる|N1
+達|attain, plural, accomplished|たつ・だ||N3
+良|good, pleasing, skilled|りょう|よい・いい|N3
+響|echo, reverberation, resound|きょう|ひびく|N1
+阪|heights, slope|はん|さか
+帰|return, return home, homecoming|き|かえる・かえす|N4
+針|needle, pin, staple|しん|はり|N2
+専|specialty, exclusive, mainly|せん|もっぱら|N2
+推|infer, conjecture, guess|すい|おす|N1
+谷|valley|こく|たに・きわまる|N2
+古|old|こ|ふるい・ふる|N4
+候|climate, weather, candidate|こう|そうろう|N3
+史|history, chronicle|し||N2
+天|heaven, heavens, sky|てん|あまつ・あめ|N5
+階|floor, story, storey|かい|きざはし|N2
+程|extent, degree, law|てい|ほど|N3
+満|full, fullness, enough|まん・ばん|みちる・みつ|N3
+敗|failure, fail, defeat|はい|やぶれる|N3
+管|pipe, tube, wind instrument|かん|くだ|N2
+値|value, price, cost|ち|ね・あたい|N3
+歌|song, sing|か|うた・うたう|N4
+買|buy|ばい|かう|N4
+突|stab, thrust, protruding|とつ・か|つく|N3
+兵|soldier, private, troops|へい・ひょう|つわもの|N2
+接|adjoin, touch, contact|せつ・しょう|つぐ|N2
+請|request, solicit, invite|せい・しん|こう・うける|N1
+器|container, vessel, utensil|き|うつわ|N1
+士|samurai, gentleman, scholar|し|さむらい|N1
+光|sunlight, light, ray|こう|ひかる・ひかり|N3
+討|chastise, attack, defeat|とう|うつ|N1
+路|road, path, route|ろ・る|みち|N3
+悪|bad, evil, vice|あく・お|わるい・わる|N4
+科|course, science, department|か||N3
+攻|aggression, attack, criticize|こう|せめる|N1
+崎|cape, promontory, spit|き|さき・さい|N1
+督|coach, command, urge|とく||N1
+授|instruct, impart, grant|じゅ|さずける・さずかる|N1
+催|sponsor, hold (a meeting), give (a dinner)|さい|もようす・もよおす|N1
+細|thin, dainty, get thin|さい|ほそい・ほそる|N2
+効|effective, merit, efficacy|こう|きく・ききめ|N2
+図|diagram, map, drawing|ず・と|え・はかる|N4
+週|week|しゅう||N4
+積|accumulate, volume, product (x*y)|せき|つむ・つもる|N3
+丸|circle, circular, round|がん|まる・まるめる|N2
+他|other, another, the others|た|ほか|N3
+及|reach, reach out, exert|きゅう|およぶ・および|N1
+湾|gulf, bay, inlet|わん|いりえ|N2
+録|record|ろく|しるす・とる|N2
+処|deal with, dispose, manage|しょ|ところ・おる|N3
+省|conserve, focus, government ministry|せい・しょう|かえりみる・はぶく|N2
+旧|former, old times, old things|きゅう|ふるい・もと|N2
+室|room, apartment, chamber|しつ|むろ|N4
+憲|constitution, law|けん||N1
+太|fat, plump, thick|たい・た|ふとい・ふとる|N3
+橋|bridge|きょう|はし|N2
+歩|walk, counter for steps|ほ・ぶ|あるく・あゆむ|N4
+離|detach, separation, disjoin|り|はなれる・はなす|N1
+岸|coast, shore, beach|がん|きし|N2
+客|guest, customer, visitor|きゃく・かく||N3
+風|wind, style, air|ふう・ふ|かぜ・かざ|N4
+紙|paper|し|かみ|N4
+激|fierce, violent, get excited|げき|はげしい|N1
+否|no, negate, noes|ひ|いな・いや|N3
+周|circumference, circuit, lap|しゅう|まわり|N2
+師|teacher, expert, master|し||N3
+摘|pluck, pinch, pick|てき|つむ|N1
+材|lumber, material, timber|ざい||N2
+登|climb, ascend, climb up|とう・と|のぼる・あがる|N3
+系|lineage, system|けい||N1
+批|criticism, strike|ひ||N1
+郎|guy, son, counter for sons|ろう・りょう|おとこ|N1
+母|mother, mom, mum|ぼ|はは・も|N5
+易|easy, ready to, simple|えき・い|やさしい・やすい|N3
+健|healthy, health, strength|けん|すこやか|N1
+黒|black|こく|くろ・くろずむ|N4
+火|fire|か|ひ・ほ|N5
+戸|door, counter for houses|こ|と|N2
+速|fast, quick|そく|はやい・はや|N3
+存|exist, suppose, be aware of|そん・ぞん|ながらえる・ある|N3
+花|flower|か・け|はな|N4
+春|spring, springtime, spring (season)|しゅん|はる|N4
+飛|fly, skip (pages), scatter|ひ|とぶ・とばす|N3
+殺|kill, murder, butcher|さつ・さい|ころす・そぐ|N3
+央|center, centre, middle|おう||N2
+券|ticket|けん||N2
+赤|red|せき・しゃく|あか・あかい|N4
+号|number, nickname, item|ごう|さけぶ・よびな|N3
+単|simple, one, single|たん|ひとえ|N3
+盟|alliance, oath|めい||N1
+座|sit, seat, squat|ざ|すわる|N3
+青|blue, green|せい・しょう|あお・あおい|N4
+破|tear, rend, rip|は|やぶる・やぶれる|N3
+編|knit, compilation, plait|へん|あむ|N2
+捜|search, look for, locate|そう・しゅ|さがす|N2
+竹|bamboo|ちく|たけ|N2
+除|exclude, remove, division (x/3)|じょ・じ|のぞく|N3
+完|perfect, completion, end|かん||N3
+降|descend, precipitate, fall|こう・ご|おりる・おろす|N3
+超|ultra, super, transcend|ちょう|こえる・こす|N2
+責|blame, condemn, censure|せき|せめる|N3
+並|line up, row, and|へい・ほう|なみ・ならべる|N2
+療|heal, cure|りょう||N2
+従|obey, accompany, follow|じゅう・しょう|したがう・したがえる|N1
+右|right|う・ゆう|みぎ|N5
+修|discipline, conduct oneself well, study|しゅう・しゅ|おさめる・おさまる|N1
+捕|catch, capture|ほ|とらえる・とらわれる|N3
+隊|squad, regiment, party|たい||N1
+危|dangerous, fear, uneasy|き|あぶない・あやうい|N3
+採|gather, pick, take|さい|とる|N2
+織|weave, fabric|しょく・しき|おる・おり|N1
+森|forest, woods|しん|もり|N2
+競|compete, emulate, compete with|きょう・けい|きそう・せる|N2
+拡|extend, broaden, expand|かく・こう|ひろがる・ひろげる|N1
+故|circumstance, reason, happenstance|こ|ゆえ・ふるい|N1
+館|public building, building, mansion|かん|やかた・たて|N4
+振|shake, wave, wag|しん|ふる・ぶる|N1
+給|salary, wage, gift|きゅう|たまう・たもう|N3
+屋|roof, shop, store|おく|や|N4
+介|jammed in, shellfish, mediate|かい||N2
+読|read|どく・とく|よむ|N5
+弁|dialect, speech, valve|べん・へん|かんむり・わきまえる|N1
+根|root, head (pimple)|こん|ね|N2
+色|color|しょく・しき|いろ|N4
+友|friend|ゆう|とも|N5
+苦|suffering, trial, worry|く|くるしい・くるしむ|N3
+就|settle in, concerning, settle|しゅう・じゅ|つく・つける|N1
+迎|welcome, meet, greet|げい|むかえる|N3
+走|run|そう|はしる|N4
+販|sell, marketing, trade|はん||N2
+園|garden, park, yard|えん|その|N3
+具|tool, utensil, means|ぐ|そなえる・つぶさに|N3
+左|left|さ・しゃ|ひだり|N5
+異|differ, uncommon, different|い|こと・ことなる|N1
+歴|continuation, curriculum, passage of time|れき・れっき||N2
+辞|quit, word, resign|じ|やめる・いなむ|N3
+将|commander, leader, general|しょう・そう|まさに・はた|N2
+秋|autumn, fall|しゅう|あき・とき|N4
+因|cause, factor, be associated with|いん|よる・ちなむ|N3
+献|offer, offering, counter for drinks|けん・こん|たてまつる|N1
+厳|strict, stern, strictness|げん・ごん|おごそか・きびしい|N1
+馬|horse|ば|うま・ま|N3
+愛|love, affection, favourite|あい|いとしい・かなしい|N3
+幅|width, hanging scroll|ふく|はば|N2
+休|rest, day off, retire|きゅう|やすむ・やすまる|N5
+維|maintain, fiber, tie|い||N1
+富|rich, wealth, enrich|ふ・ふう|とむ・とみ|N3
+浜|beach, seacoast, seashore|ひん|はま|N1
+父|father, dad|ふ|ちち|N5
+遺|leave behind, bequeath, reserve|い・ゆい|のこす|N1
+彼|he, that|ひ|かれ・かの|N3
+般|generally, general, carrier|はん||N2
+未|not yet, un-, hitherto|み・び|いまだ・まだ|N3
+塁|base, baseball base, bases|るい・らい|とりで|N1
+貿|trade, exchange|ぼう||N2
+講|lecture, club, association|こう||N2
+邦|home country, country, japan|ほう|くに|N1
+舞|dance, flit, circle|ぶ|まう・まい|N3
+林|forest, woods, grove|りん|はやし|N2
+装|attire, dress, pretend|そう・しょう|よそおう・よそおい|N2
+諸|various, many, several|しょ|もろ|N2
+夏|summer|か・が|なつ|N4
+素|element, elementary, principle|そ・す|もと|N1
+亡|death, deceased, the late|ぼう・もう|ない・なき|N3
+劇|drama, play|げき||N2
+河|river|か|かわ|N2
+遣|dispatch, despatch, send|けん|つかう・つかわす|N1
+航|navigation, navigate, sail|こう||N2
+抗|confront, resist, defy|こう|あらがう|N1
+冷|cool, cold, cold (beer, person)|れい|つめたい・ひえる|N3
+模|imitation, copy, mock|も・ぼ||N1
+雄|male, brave, masculine|ゆう|お・おす|N1
+適|suitable, occasional, rare|てき|かなう|N3
+婦|wife, lady, woman|ふ|よめ|N3
+鉄|iron|てつ|くろがね|N2
+寄|approach, draw near, stop in|き|よる・よせる|N3
+益|benefit, gain, profit|えき・やく|ます|N1
+込|crowded, mixture, in bulk||こむ・こみ|N3
+顔|face, expression|がん|かお|N3
+緊|tense, solid, hard|きん|しめる・しまる|N1
+類|type, category, kind|るい|たぐい|N3
+児|child, newborn babe, young of animals|じ・に|こ|N2
+余|surplus, excess, too much|よ|あまる・あまり|N3
+禁|prohibit, prohibition, ban|きん||N2
+印|seal, mark, stamp|いん|しるし・しるす|N2
+逆|reverse, inverted, opposite|ぎゃく・げき|さか・さかさ|N2
+王|king, rule, magnate|おう・のう||N3
+返|return, answer, fade|へん|かえす・かえる|N3
+標|signpost, seal, mark|ひょう|しるべ・しるし|N1
+換|exchange, interchange, period|かん|かえる・かわる|N2
+久|long time, old story|きゅう・く|ひさしい|N2
+短|short, brevity, fault|たん|みじかい|N2
+油|oil, fat|ゆ・ゆう|あぶら|N2
+妻|wife, spouse|さい|つま|N3
+暴|violence, outburst, rave|ぼう・ばく|あばく・あばれる|N2
+輪|wheel, ring, loop|りん|わ|N2
+占|fortune, occupy, fortune-telling|せん|しめる・うらなう|N2
+宣|proclaim, say, announce|せん|のたまう|N1
+背|back, height, stature|はい|せ・せい|N3
+昭|shining, bright|しょう||N1
+廃|obsolete, abolish, cessation|はい|すたれる・すたる|N1
+植|plant|しょく|うえる・うわる|N2
+熱|heat, fever, temperature|ねつ|あつい|N3
+宿|lodge, inn, lodging|しゅく|やど・やどる|N3
+薬|medicine, drug, drugs|やく|くすり|N3
+伊|italy, that one|い|かれ|N1
+江|inlet, bay, creek|こう|え|N1
+清|pure, purify, cleanse|せい・しょう|きよい・きよまる|N2
+習|learn|しゅう・じゅ|ならう・ならい|N4
+険|risky, steep, precipitous|けん|けわしい|N3
+頼|trust, request|らい|たのむ・たのもしい|N3
+僚|colleague, official, companion|りょう||N1
+覚|memorize, awake, learn|かく|おぼえる・さます|N3
+吉|good luck, joy, congratulations|きち・きつ|よし|N1
+盛|pile, prosperous, heap|せい・じょう|もる・さかる|N1
+船|boat, ship|せん|ふね・ふな|N3
+倍|double, times, multiply|ばい||N2
+均|equal, level, average|きん|ならす|N2
+億|hundred million|おく||N2
+途|route, way, road|と|みち|N3
+圧|pressure, push, overwhelm|あつ・えん|おす・へす|N2
+芸|acting, art, technique|げい・うん|うえる・のり|N2
+許|permit, allow, approve|きょ|ゆるす・もと|N3
+皇|emperor|こう・おう||N1
+臨|look to, face, meet|りん|のぞむ|N1
+踏|step, trample, carry through|とう|ふむ・ふまえる|N1
+駅|station, train station|えき||N4
+署|government office, political office, office|しょ||N2
+抜|extract, slip out, pull out|ばつ・はつ|ぬく・ぬき|N3
+壊|break, demolition, destroy|かい・え|こわす・こわれる|N1
+債|debt, bond, loan|さい||N1
+便|convenience, convenient, facility|べん・びん|たより|N3
+伸|stretch, expand, extend|しん|のびる・のばす|N2
+留|detain, fasten, halt|りゅう・る|とめる・とまる|N3
+罪|guilt, sin, crime|ざい|つみ|N3
+停|halt, stopping|てい|とめる・とまる|N2
+興|interest, entertain, revive|こう・きょう|おこる・おこす|N1
+爆|explode, bomb, burst open|ばく|はぜる|N2
+陸|land, six|りく・ろく|おか|N2
+玉|ball, jewel|ぎょく|たま|N2
+源|origin, source|げん|みなもと|N1
+儀|ceremony, rule, affair|ぎ||N1
+波|wave, waves, billows|は|なみ|N2
+創|create, genesis, wound|そう・しょう|つくる・はじめる|N1
+障|hinder, hurt, harm|しょう|さわる|N1
+継|inherit, succeed, continue|けい|つぐ・まま|N1
+筋|muscle, tendon, sinew|きん|すじ|N1
+狙|aim, aim at, sight|そ・しょ|ねらう・ねらい
+帯|belt, sash, obi|たい|おびる・おび|N2
+延|prolong, stretching|えん|のびる・のべる|N2
+羽|feather, feathers, wing|う|は・わ|N2
+努|toil, diligent, as much as possible|ど|つとめる|N3
+固|hard, harden, set|こ|かためる・かたまる|N2
+闘|struggle, fight, war|とう|たたかう・あらそう|N1
+精|spirit, refined, ghost|せい・しょう|しらげる・くわしい|N3
+則|rule, follow, based on|そく|のっとる|N2
+葬|burial, interment, bury|そう|ほうむる|N1
+乱|riot, war, disorder|らん・ろん|みだれる・みだる|N2
+避|dodge, avoid, evade|ひ|さける・よける|N1
+普|normal, universal, wide(ly)|ふ|あまねく・あまねし|N2
+散|scatter, disperse, spend|さん|ちる・ちらす|N3
+司|director, official, govt office|し|つかさどる|N1
+康|ease, peace|こう||N1
+測|measure, fathom, plan|そく|はかる|N2
+豊|plentiful, bountiful, excellent|ほう・ぶ|ゆたか・とよ|N2
+洋|western style, ocean, sea|よう||N4
+静|quiet|せい・じょう|しず・しずか|N3
+善|morally good, good, virtuous|ぜん|よい・いい|N1
+逮|apprehend, chase|たい||N1
+婚|marriage|こん||N3
+厚|thick, heavy, rich|こう|あつい・あか|N2
+喜|rejoice, delighted, pleased|き|よろこぶ・よろこばす|N3
+齢|age|れい|よわい・とし|N2
+囲|surround, besiege, store|い|かこむ・かこう|N2
+卒|graduate, soldier, private|そつ・しゅつ|そっする・おえる|N2
+迫|urge, compel, coerce|はく|せまる|N1
+略|abbreviation, abbreviate, omission|りゃく|ほぼ・はぶく|N2
+承|consent, acquiesce, hear|しょう・じょう|うけたまわる・うける|N2
+浮|float, floating, rise to surface|ふ|うく・うかれる|N3
+惑|misguided, beguile, delusion|わく|まどう|N1
+崩|crumble, die, demolish|ほう|くずれる・くずす|N1
+順|order, sequence, obey|じゅん||N2
+紀|account, narrative, chronicle|き||N1
+聴|listen, headstrong, naughty|ちょう・てい|きく・ゆるす|N1
+脱|undress, removing, escape from|だつ|ぬぐ・ぬげる|N1
+旅|trip, travel|りょ|たび|N4
+絶|extinction, die out, discontinue|ぜつ|たえる・たやす|N3
+級|level, grade, rank|きゅう||N1
+幸|happiness, blessing, fortune|こう|さいわい・さち|N3
+岩|boulder, rock, cliff|がん|いわ|N2
+練|practice, gloss, train|れん|ねる・ねり|N2
+押|push, stop, check|おう|おす・おし|N3
+軽|lightweight, light, light weight|けい・きょう|かるい・かろやか|N2
+倒|overthrow, collapse, fall|とう|たおれる・たおす|N3
+了|finish, complete, end|りょう||N2
+庁|agency, government office|ちょう・てい|やくしょ|N2
+博|exhibition, gambling, dr.|はく・ばく||N1
+城|castle|じょう・せい|しろ|N2
+患|afflicted, disease, suffer from|かん|わずらう|N2
+締|tighten, tie, shut|てい|しまる・しまり|N1
+等|equal, etc., and so forth|とう|ひとしい・など|N3
+救|rescue, salvation, save|きゅう|すくう|N1
+執|tenacious, take hold, grasp|しつ・しゅう|とる|N1
+層|layer, stratum, social class|そう||N2
+版|edition, printing block, printing plate|はん||N2
+老|elderly, old man, old age|ろう|おいる・ふける|N3
+令|orders, ancient laws, command|れい||N2
+角|angle, corner, square|かく|かど・つの|N2
+絡|entangle, coil around, entwine|らく|からむ・からまる|N2
+損|loss, damage, disadvantage|そん|そこなう・そこねる|N2
+房|cluster, tassel, tuft|ぼう|ふさ|N1
+募|recruit, campaign, gather (contributions)|ぼ|つのる|N2
+曲|music, bend, melody|きょく|まがる・まげる|N3
+撤|withdrawal, remove, withdraw|てつ||N1
+裏|backside, underside, reverse|り|うら|N2
+払|pay, clear out, prune|ふつ・ひつ|はらう|N3
+削|whittle down, plane, sharpen|さく|けずる・はつる|N1
+密|secrecy, density (pop), minuteness|みつ|ひそか|N1
+庭|garden, courtyard, yard|てい|にわ|N3
+徒|junior, follower, on foot|と|いたずら・あだ|N3
+措|set aside, give up, suspend|そ|おく|N1
+仏|buddha, the dead, france|ぶつ・ふつ|ほとけ|N2
+績|exploits, achievements, unreeling cocoons|せき||N2
+築|construct, build, fabricate|ちく|きずく|N2
+貨|freight, goods, property|か|たから|N2
+志|intention, plan, resolve|し|こころざす・こころざし|N1
+混|mix, blend, confuse|こん|まじる・まざる|N2
+載|publish, ride, board|さい|のせる・のる|N1
+昇|ascend, rise up|しょう|のぼる|N2
+池|pond, cistern, pool|ち|いけ|N2
+陣|army base, camp, battle array|じん||N1
+我|i, me, ego|が|われ・わ|N1
+勤|work, diligence, become employed|きん・ごん|つとめる・つとまる|N3
+為|sake, do, change|い|ため・なる|N1
+血|blood|けつ|ち|N2
+遅|slow, late, back|ち|おくれる・おくらす|N3
+抑|suppress, repress, well|よく|おさえる|N1
+幕|curtain, bunting, act of play|まく・ばく|とばり|N1
+居|alive, reside, to be|きょ・こ|いる・おる|N3
+染|dye, color, paint|せん|そめる・そまる|N1
+温|warm|おん|あたたか・あたたかい|N2
+雑|random, miscellaneous|ざつ・ぞう|まじえる・まじる|N3
+招|beckon, invite, summon|しょう|まねく|N3
+奈|nara, what?|な・ない|いかん・からなし|N1
+季|seasons|き||N2
+困|distressed, troubled, quandary|こん|こまる|N3
+星|star, spot, dot|せい・しょう|ほし|N2
+傷|wound, hurt, injure|しょう|きず・いたむ|N1
+永|eternity, long, lengthy|えい|ながい|N2
+択|select, choose, elect|たく|えらぶ|N1
+秀|excel, excellence, beauty|しゅう|ひいでる|N1
+著|author, renowned, publish|ちょ・ちゃく|あらわす・いちじるしい|N2
+徴|indication, sign, indications|ちょう・ち|しるし|N1
+誌|magazine, document, records|し||N2
+庫|storage, warehouse, storehouse|こ・く|くら|N2
+弾|bullet, twang, flip|だん・たん|ひく・はずむ|N1
+償|reparation, make up for, recompense|しょう|つぐなう|N1
+刊|edition, publish, carve|かん||N2
+像|statue, image, picture|ぞう||N2
+功|achievement, accomplishment, merits|こう・く|いさお|N1
+拠|based on, foothold, follow|きょ・こ|よる|N1
+香|fragrance, incense, smell|こう・きょう|か・かおり|N2
+欠|lack, gap, fail|けつ・けん|かける・かく|N3
+更|again, renew, grow late|こう|さら・さらに|N3
+秘|secret, conceal|ひ|ひめる・ひそか|N1
+拒|refuse, refusal, repel|きょ・ご|こばむ|N1
+刑|punish, penalty, sentence|けい||N1
+坂|slope, incline, hill|はん|さか|N2
+刻|carve, engrave, cut fine|こく|きざむ・きざみ|N3
+底|bottom, sole, depth|てい|そこ|N2
+賛|agree, approve, praise|さん|たすける・たたえる|N3
+塚|mound, hillock|ちょう|つか|N1
+致|do, doth, send|ち|いたす|N1
+抱|hug, embrace, hold in arms|ほう|だく・いだく|N3
+繰|spin, winding, reel|そう|くる|N1
+服|clothes, clothing, admit|ふく||N4
+犯|crime, sin, offense|はん・ぼん|おかす|N3
+尾|tail, end, counter for fish|び|お|N1
+描|draw, sketch, compose|びょう|えがく・かく|N1
+布|cloth, linen, spread|ふ|ぬの|N2
+恐|fear, dread, awe|きょう|おそれる・おそる|N3
+寺|temple, buddhist temple|じ|てら|N2
+鈴|buzzer, small bell|れい・りん|すず|N1
+盤|tray, platter, board|ばん||N1
+息|breath, respiration, son|そく|いき|N3
+宇|outer space, eaves, roof|う||N2
+項|paragraph, nape of neck, clause|こう|うなじ|N1
+喪|mourning, miss|そう|も|N1
+伴|accompany, consort, bring with|はん・ばん|ともなう|N1
+遠|far, distant|えん・おん|とおい|N3
+養|foster, bring up, rear|よう・りょう|やしなう|N1
+懸|suspend, state of suspension, hang|けん・け|かける・かかる|N1
+戻|return, re-, revert|れい|もどす・もどる|N3
+街|street, boulevard, town|がい・かい|まち|N1
+巨|giant, gigantic, big|きょ||N2
+震|earthquake, quake, shake|しん|ふるう・ふるえる|N2
+願|request, petition, vow|がん|ねがう|N3
+絵|drawing, painting, picture|かい・え||N3
+希|wish, hope, beg|き・け|まれ|N2
+越|go beyond, surpass, cross over|えつ・おつ|こす・こえる|N3
+契|pledge, promise, vow|けい|ちぎる|N1
+掲|display, put up (a notice), put up|けい|かかげる|N1
+躍|leap, dance, skip|やく|おどる|N1
+棄|abandon, throw away, discard|き|すてる|N1
+欲|want, longing, covetousness|よく|ほっする・ほしい|N3
+痛|pain, hurt, damage|つう|いたい・いたむ|N3
+触|touch, contact, feel|しょく|ふれる・さわる|N2
+邸|residence, mansion|てい|やしき|N1
+依|reliant, dependent, depend on|い・え|よる|N2
+籍|enroll, domiciliary register, membership|せき||N2
+汚|dirty, pollute, disgrace|お|けがす・けがれる|N2
+縮|shrink, contract, shrivel|しゅく|ちぢむ・ちぢまる|N1
+還|send back, return|かん|かえる|N1
+枚|counter for flat objects|まい・ばい||N2
+属|belong, genus, subordinate official|ぞく・しょく|さかん・つく|N1
+笑|laugh|しょう|わらう・えむ|N3
+互|mutual, mutually, reciprocally|ご|たがい・かたみに|N3
+複|duplicate, double, compound|ふく||N2
+慮|consider, prudence, thought|りょ|おもんぱくる・おもんぱかる|N1
+郵|mail, stagecoach stop|ゆう||N2
+束|bundle, sheaf, ream|そく|たば・たばねる|N3
+仲|relationship, go-between|ちゅう|なか|N2
+栄|prosper, flourish, prosperity|えい・よう|さかえる・はえ|N2
+札|bill, tag, label|さつ|ふだ|N2
+枠|frame, framework, spindle||わく|N1
+似|resemble, becoming, counterfeit|じ|にる・ひる|N3
+夕|evening|せき|ゆう|N4
+恵|favor, blessing, grace|けい・え|めぐむ・めぐみ|N1
+板|board, plank, plate|はん・ばん|いた|N2
+列|row, file, rank|れつ・れ||N3
+露|expose, dew, tears|ろ・ろう|つゆ|N1
+沖|open sea, offing, rise high into sky|ちゅう|おき・おきつ|N1
+探|look for, search for, grope|たん|さぐる・さがす|N3
+逃|escape, flee, shirk|とう|にげる・にがす|N3
+借|borrow, rent|しゃく|かりる|N4
+緩|loose, slacken, loosen|かん|ゆるい・ゆるやか|N1
+節|season, node, period|せつ・せち|ふし・のっと|N1
+需|demand, request, need|じゅ||N1
+骨|bone, skeleton, remains|こつ|ほね|N2
+射|shoot, shine into, onto|しゃ|いる・さす|N1
+傾|lean, incline, tilt|けい|かたむく・かたむける|N2
+届|deliver, reach, arrive|かい|とどける・とどく|N2
+曜|weekday, day of the week|よう||N4
+遊|play|ゆう・ゆ|あそぶ・あそばす|N3
+迷|astray, lost, be perplexed|めい|まよう|N3
+夢|dream, vision, illusion|む・ぼう|ゆめ・ゆめみる|N3
+巻|scroll, volume, book|かん・けん|まく・まき|N2
+購|subscription, buy|こう||N1
+揮|brandish, wave, wag|き|ふるう|N1
+君|buddy, mister, you|くん|きみ|N3
+燃|burn, blaze, glow|ねん|もえる・もやす|N2
+充|allocate, allot, fill|じゅう|あてる・みたす|N1
+雨|rain|う|あめ・あま|N5
+閉|closed, close, closure|へい|とじる・とざす|N3
+緒|together, thong, beginning|しょ・ちょ|お・いとぐち|N3
+跡|traces, tracks, mark|せき|あと|N2
+包|wrap, pack up, cover|ほう|つつむ・くるむ|N2
+駐|resident, stop-over, reside in|ちゅう||N2
+貢|tribute, support, finance|こう・く|みつぐ|N1
+鹿|deer|ろく|しか・か|N1
+弱|weak, frail|じゃく|よわい・よわる|N2
+却|contrary, instead, on the contrary|きゃく|かえって・しりぞく|N1
+端|edge, origin, end|たん|はし・は|N1
+賃|rent, fare, fee|ちん||N1
+折|fold, bend, break|せつ・しゃく|おる・おり|N3
+紹|introduce, inherit, help|しょう||N2
+獲|seize, get, find|かく|える|N1
+郡|county, district|ぐん|こおり|N1
+併|join, get together, unite|へい|あわせる|N1
+草|grass, weed, weeds|そう|くさ|N3
+徹|penetrate, clear, pierce|てつ||N1
+飲|drink, smoke, take|いん・おん|のむ|N4
+貴|valuable, precious, value|き|たっとい・とうとい|N1
+埼|cape, spit, promontory|き|さき・さい
+衝|collide, brunt, highway|しょう|つく|N1
+焦|char, hurry, impatient|しょう|こげる・こがす|N1
+奪|rob, take by force, snatch away|だつ|うばう|N1
+雇|employ, hire|こ|やとう|N2
+災|disaster, calamity, woe|さい|わざわい|N1
+浦|bay, creek, inlet|ほ|うら|N1
+暮|livelihood, evening, twilight|ぼ|くれる・くらす|N3
+替|replace, exchange, spare|たい|かえる・かえ|N2
+析|analysis, chop, divide|せき||N1
+預|deposit, custody, leave with|よ|あずける・あずかる|N2
+焼|bake, cook, burn|しょう|やく・やき|N2
+簡|simplicity, brevity|かん・けん|えらぶ・ふだ|N2
+譲|defer, turnover, transfer|じょう|ゆずる|N1
+称|title, appellation, praise|しょう|たたえる・となえる|N1
+肉|meat|にく|しし|N4
+納|supply, settlement, obtain|のう・なっ|おさめる・おさまる|N1
+樹|wood, timber, trees|じゅ|き|N1
+挑|challenge, contend for, make love to|ちょう|いどむ|N1
+章|chapter, badge, composition|しょう||N2
+臓|internal organs, entrails, viscera|ぞう|はらわた|N2
+律|law, rhythm, regulation|りつ・りち||N2
+誘|invite, entice, lead|ゆう|さそう・いざなう|N1
+紛|distract, be mistaken for, go astray|ふん|まぎれる・まぎらす|N1
+貸|lend|たい|かす・かし|N4
+至|attain, climax, arrive|し|いたる|N1
+宗|religion, sect, denomination|しゅう・そう|むね|N1
+促|urge, stimulate, press|そく|うながす|N1
+慎|humility, be careful, discreet|しん|つつしむ・つつましい|N1
+控|abstain, withdraw, draw in|こう|ひかえる・ひかえ|N1
+</script>
+<script>
+(function(){
+"use strict";
+var CFG={"id": "ja-kanji", "from": "漢字", "to": "EN", "kind": "kanji"};
+var W=[];(document.getElementById("data").textContent||"").split("\n").forEach(function(l){l=l.trim();if(!l)return;var p=l.split("|");if(p.length>=2&&p[0]&&p[1])W.push(p)});
+if(!W.length)return;
+var KEY="notomantra-flash-"+CFG.id;
+var mem={};
+function load(){try{var s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return mem[KEY]||null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){mem[KEY]=st}}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function freshDeck(){var k={};st.known.forEach(function(i){k[i]=1});var d=[];for(var i=0;i<W.length;i++)if(!k[i])d.push(i);return shuffle(d)}
+var st=load();
+if(!st||!Array.isArray(st.known)||!Array.isArray(st.deck)||st.n!==W.length){st={n:W.length,known:[],deck:[],dir:0,open:false}}
+if(!st.deck.length)st.deck=freshDeck();
+var $=function(id){return document.getElementById(id)};
+var card=$("card"),front=$("front"),back=$("back"),menu=$("menu");
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function render(){
+  $("dir").textContent=st.dir?CFG.to+" → "+CFG.from:CFG.from+" → "+CFG.to;
+  var known=st.known.length,total=W.length;
+  $("barfill").style.width=(known/total*100).toFixed(1)+"%";
+  $("count").textContent=known.toLocaleString("en-US")+" / "+total.toLocaleString("en-US")+" known";
+  card.classList.toggle("open",!!st.open);
+  if(!st.deck.length){
+    front.className="front en";front.innerHTML='<span class="done">All '+total.toLocaleString("en-US")+' marked as known.</span>';
+    back.innerHTML='<div class="sub">Tap … then Reset progress to go again.</div>';card.classList.add("open");return;
+  }
+  var w=W[st.deck[0]];
+  var f=CFG.kind;
+  if(!st.dir){
+    front.className="front"+(f==="kanji"?" big":"");
+    front.textContent=w[0];
+    back.innerHTML='<div class="meaning">'+esc(w[1])+'</div>'+extra(w);
+  }else{
+    front.className="front en";
+    front.textContent=w[1];
+    back.innerHTML='<div class="meaning native">'+esc(w[0])+'</div>'+extra(w);
+  }
+}
+function extra(w){
+  if(CFG.kind==="kanji"){
+    var h="";
+    if(w[2])h+='<div class="sub"><b>ON</b>'+esc(w[2])+'</div>';
+    if(w[3])h+='<div class="sub"><b>KUN</b>'+esc(w[3])+'</div>';
+    if(w[4])h+='<div><span class="pill">JLPT '+esc(w[4])+'</span></div>';
+    return h;
+  }
+  if(CFG.kind==="ko"&&w[2])return '<div class="sub">'+esc(w[2])+'</div>';
+  return "";
+}
+function flip(){if(menu.classList.contains("show"))return;if(!st.deck.length)return;st.open=!st.open;save();render()}
+function next(known){
+  if(!st.deck.length)return;
+  var i=st.deck.shift();
+  if(known){if(st.known.indexOf(i)<0)st.known.push(i)}
+  else{var pos=Math.min(st.deck.length,8+Math.floor(Math.random()*12));st.deck.splice(pos,0,i)}
+  st.open=false;save();render();
+}
+card.addEventListener("click",function(e){if(menu.contains(e.target))return;flip()});
+card.addEventListener("keydown",function(e){if(e.target!==card)return;if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}});
+document.addEventListener("keydown",function(e){if(menu.classList.contains("show"))return;if(e.key==="ArrowRight")next(false);if(e.key==="ArrowUp")next(true)});
+$("again").addEventListener("click",function(){next(false)});
+$("know").addEventListener("click",function(){next(true)});
+$("dir").addEventListener("click",function(){st.dir=st.dir?0:1;st.open=false;save();render()});
+$("more").addEventListener("click",function(e){e.stopPropagation();
+  $("menuinfo").textContent=st.known.length+" known, "+st.deck.length+" still in rotation. Known words are skipped until you reset.";
+  menu.classList.toggle("show")});
+$("close").addEventListener("click",function(e){e.stopPropagation();menu.classList.remove("show")});
+$("reset").addEventListener("click",function(e){e.stopPropagation();st={n:W.length,known:[],deck:[],dir:st.dir,open:false};st.deck=freshDeck();save();menu.classList.remove("show");render()});
+render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>French Flashcards</title>
+<style>
+:root{
+  --bg:#f7f0e3;
+  --card:#fbf6ec;
+  --line:#dcc6a3;
+  --line-soft:#e9dbc2;
+  --ink:#8c6c45;
+  --ink-soft:#ae936f;
+  --ink-faint:#c7b291;
+  --good:#9aa57a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple SD Gothic Neo","Malgun Gothic","Hiragino Sans","Yu Gothic","Noto Sans CJK JP","Noto Sans KR",sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+.wrap{container-type:inline-size;height:100%;min-height:210px;padding:4px}
+.w{height:100%;display:flex;flex-direction:column;gap:10px;background:var(--bg);border:3px solid var(--line);border-radius:20px;padding:14px 14px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;gap:6px;flex-shrink:0}
+button{font:inherit;color:var(--ink);background:transparent;border:2px solid var(--line);border-radius:999px;cursor:pointer;transition:background .15s,border-color .15s,transform .1s;-webkit-tap-highlight-color:transparent}
+button:hover{background:var(--card);border-color:var(--ink-faint)}
+button:active{transform:scale(.96)}
+button:focus-visible{outline:2px solid var(--ink-soft);outline-offset:2px}
+.chip{font-size:11px;font-weight:600;padding:4px 10px;letter-spacing:.04em}
+.icon{width:28px;height:28px;display:grid;place-items:center;padding:0}
+.icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card{flex:1;min-height:110px;position:relative;container-type:size;background:var(--card);border:2px solid var(--line-soft);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px 12px;cursor:pointer;user-select:none;overflow:hidden}
+.front{font-family:"Iowan Old Style","Palatino Linotype",Georgia,"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:clamp(20px,min(9cqi,17cqh),44px);line-height:1.15;font-weight:500;color:var(--ink);word-break:keep-all;overflow-wrap:anywhere}
+.front.big{font-size:clamp(36px,min(22cqi,30cqh),88px);line-height:1}
+.front.en{font-family:inherit;font-size:clamp(16px,min(6.5cqi,13cqh),30px);font-weight:600}
+.back{gap:2px;margin-top:min(10px,3cqh);display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s}
+.card.open .back{opacity:1;transform:none}
+.meaning{font-size:clamp(13px,min(4.6cqi,9cqh),19px);font-weight:600;color:var(--ink)}
+.meaning.native{font-family:"Iowan Old Style",Georgia,"Hiragino Mincho ProN","Yu Mincho","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:clamp(18px,min(8cqi,15cqh),36px);font-weight:500}
+.sub{font-size:12px;color:var(--ink-soft);line-height:1.5}
+.sub b{font-weight:600;color:var(--ink-soft);letter-spacing:.04em;margin-right:3px}
+.hint{position:absolute;bottom:8px;left:0;right:0;font-size:11px;color:var(--ink-faint);transition:opacity .2s}
+.card.open .hint{opacity:0}
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;border:1.5px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink-soft)}
+.actions{display:flex;gap:8px}
+.actions button{flex:1;padding:9px 6px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+.actions .know{background:var(--card)}
+.actions svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.prog{display:flex;align-items:center;gap:8px}
+.bar{flex:1;height:6px;border-radius:99px;background:var(--line-soft);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ink-faint);border-radius:99px;transition:width .3s}
+.count{font-size:11px;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+.menu{position:absolute;inset:0;background:var(--bg);border-radius:12px;padding:14px;display:none;flex-direction:column;gap:10px;justify-content:center;cursor:default;text-align:left;z-index:2}
+.menu.show{display:flex}
+.menu h4{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.menu p{font-size:12px;color:var(--ink-soft);line-height:1.5}
+.menu .row{display:flex;gap:8px;flex-wrap:wrap}
+.menu .row button{font-size:12px;font-weight:600;padding:6px 12px}
+.menu .credit{font-size:10px;color:var(--ink-faint)}
+.done{font-size:15px;font-weight:600}
+/* compact: narrow columns */
+@container (max-width:300px){
+  .w{padding:10px;gap:8px;border-radius:16px}
+  .tag{font-size:10px}
+  .wc{display:none}
+  .chip{padding:3px 8px;font-size:10px}
+  .actions button span{display:none}
+  .actions button{padding:8px 4px}
+  .hint{display:none}
+  .sub{font-size:11px}
+}
+@container (max-width:200px){
+  .count{display:none}
+  .tools .icon{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="w" id="app">
+  <div class="top">
+    <div class="tag" id="tag">French<span class="wc"> · 1,010 words</span></div>
+    <div class="tools">
+      <button class="chip" id="dir" title="Switch direction" aria-label="Switch direction"></button>
+      <button class="icon" id="more" title="Options" aria-label="Options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+    </div>
+  </div>
+  <div class="card" id="card" role="button" tabindex="0" aria-label="Flashcard, tap to reveal">
+    <div class="front" id="front"></div>
+    <div class="back" id="back"></div>
+    <div class="hint" id="hint">tap to reveal</div>
+    <div class="menu" id="menu">
+      <h4>Options</h4>
+      <p id="menuinfo"></p>
+      <div class="row">
+        <button id="reset">Reset progress</button>
+        <button id="close">Close</button>
+      </div>
+      <p class="credit">Saved only in this browser. Nothing is sent anywhere.</p>
+    </div>
+  </div>
+  <div class="actions">
+    <button id="again" aria-label="Show again later"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><span>Again</span></button>
+    <button id="know" class="know" aria-label="I know this"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span>Know it</span></button>
+  </div>
+  <div class="prog"><div class="bar"><i id="barfill"></i></div><div class="count" id="count"></div></div>
+</div>
+</div>
+<script type="text/plain" id="data">
+le|the (masc.), him, it
+la|the (fem.), her, it
+de|of, from
+un|a, an (masc.), one
+une|a, an (fem.)
+et|and
+être|to be
+avoir|to have
+à|to, at
+il|he, it
+elle|she, it
+ne... pas|not
+je|I
+tu|you (informal)
+vous|you (formal, plural)
+nous|we
+ils|they (masc.)
+elles|they (fem.)
+on|one, we, people
+ce|this, that
+qui|who, which
+que|that, what
+dans|in
+en|in, of it
+pour|for
+par|by, through
+sur|on
+avec|with
+sans|without
+sous|under
+chez|at the home of
+plus|more
+mais|but
+ou|or
+où|where
+si|if, so, yes (to a negative)
+comme|like, as
+tout|all, everything
+très|very
+bien|well, good
+aussi|also, too
+déjà|already
+encore|again, still
+toujours|always, still
+jamais|never, ever
+rien|nothing
+personne|nobody
+quelque chose|something
+quelqu'un|someone
+faire|to do, to make
+dire|to say, to tell
+pouvoir|to be able to, can
+aller|to go
+voir|to see
+savoir|to know (facts)
+vouloir|to want
+venir|to come
+devoir|must, to owe
+prendre|to take
+trouver|to find
+donner|to give
+falloir|to be necessary
+parler|to speak, to talk
+mettre|to put
+passer|to pass, to spend (time)
+regarder|to look at, to watch
+aimer|to love, to like
+croire|to believe
+demander|to ask
+rester|to stay
+répondre|to answer
+entendre|to hear
+penser|to think
+arriver|to arrive, to happen
+connaître|to know (people, places)
+devenir|to become
+sentir|to feel, to smell
+sembler|to seem
+tenir|to hold
+comprendre|to understand
+rendre|to give back, to make
+attendre|to wait
+sortir|to go out
+vivre|to live
+entrer|to enter
+porter|to carry, to wear
+chercher|to look for
+revenir|to come back
+appeler|to call
+mourir|to die
+partir|to leave
+jouer|to play
+lire|to read
+écrire|to write
+ouvrir|to open
+fermer|to close
+perdre|to lose
+gagner|to win, to earn
+commencer|to begin
+finir|to finish
+manger|to eat
+boire|to drink
+dormir|to sleep
+courir|to run
+marcher|to walk
+acheter|to buy
+vendre|to sell
+payer|to pay
+travailler|to work
+étudier|to study
+apprendre|to learn
+enseigner|to teach
+oublier|to forget
+se souvenir|to remember
+choisir|to choose
+aider|to help
+essayer|to try
+utiliser|to use
+montrer|to show
+changer|to change
+monter|to go up
+descendre|to go down
+tomber|to fall
+retourner|to return
+envoyer|to send
+recevoir|to receive
+laisser|to leave, to let
+suivre|to follow
+expliquer|to explain
+raconter|to tell (a story)
+chanter|to sing
+danser|to dance
+nager|to swim
+voyager|to travel
+conduire|to drive
+cuisiner|to cook
+nettoyer|to clean
+laver|to wash
+préparer|to prepare
+goûter|to taste
+pleurer|to cry
+rire|to laugh
+sourire|to smile
+crier|to shout
+détester|to hate
+embrasser|to kiss
+se marier|to get married
+se réveiller|to wake up
+se lever|to get up
+se coucher|to go to bed
+s'habiller|to get dressed
+s'asseoir|to sit down
+se laver|to wash oneself
+se dépêcher|to hurry
+s'amuser|to have fun
+s'ennuyer|to be bored
+se fâcher|to get angry
+s'inquiéter|to worry
+se plaindre|to complain
+se tromper|to make a mistake
+se reposer|to rest
+rêver|to dream
+imaginer|to imagine
+promettre|to promise
+mentir|to lie
+voler|to fly, to steal
+tuer|to kill
+sauver|to save, to rescue
+protéger|to protect
+se battre|to fight
+dépenser|to spend (money)
+économiser|to save (money)
+prêter|to lend
+emprunter|to borrow
+louer|to rent
+construire|to build
+détruire|to destroy
+casser|to break
+réparer|to repair
+garder|to keep
+enlever|to remove
+ajouter|to add
+améliorer|to improve
+grandir|to grow up
+soigner|to take care of
+décider|to decide
+répéter|to repeat
+compter|to count
+accepter|to accept
+refuser|to refuse
+permettre|to allow
+réussir|to succeed
+échouer|to fail
+continuer|to continue
+arrêter|to stop
+se taire|to be quiet
+écouter|to listen
+toucher|to touch
+habiter|to live (reside)
+naître|to be born
+remplir|to fill
+vider|to empty
+tirer|to pull, to shoot
+pousser|to push, to grow
+lancer|to throw, to launch
+attraper|to catch
+cacher|to hide
+découvrir|to discover
+créer|to create
+produire|to produce
+offrir|to offer, to give (a gift)
+remercier|to thank
+saluer|to greet
+inviter|to invite
+visiter|to visit (a place)
+rencontrer|to meet
+quitter|to leave (a place, someone)
+espérer|to hope
+craindre|to fear
+partager|to share
+l'homme (m)|man
+la femme|woman, wife
+l'enfant (m/f)|child
+le garçon|boy
+la fille|girl, daughter
+le père|father
+la mère|mother
+les parents (m)|parents
+le fils|son
+le frère|brother
+la sœur|sister
+le grand-père|grandfather
+la grand-mère|grandmother
+l'oncle (m)|uncle
+la tante|aunt
+le cousin|cousin (male)
+la cousine|cousin (female)
+le mari|husband
+le copain|boyfriend, buddy
+la copine|girlfriend
+l'ami (m)|friend (male)
+l'amie (f)|friend (female)
+la famille|family
+le bébé|baby
+les gens (m)|people
+la personne|person
+monsieur|sir, Mr.
+madame|madam, Mrs.
+le voisin|neighbor
+le patron|boss
+le collègue|colleague
+le professeur|teacher
+l'étudiant (m)|student
+l'élève (m/f)|pupil
+le médecin|doctor
+l'infirmier (m)|nurse
+l'avocat (m)|lawyer, avocado
+le policier|police officer
+le cuisinier|cook
+le serveur|waiter
+l'écrivain (m)|writer
+l'artiste (m/f)|artist
+le chanteur|singer
+le roi|king
+la reine|queen
+le corps|body
+la tête|head
+le visage|face
+l'œil (m)|eye
+les yeux (m)|eyes
+l'oreille (f)|ear
+le nez|nose
+la bouche|mouth
+la dent|tooth
+les cheveux (m)|hair
+le cou|neck
+l'épaule (f)|shoulder
+le bras|arm
+la main|hand
+le doigt|finger
+la jambe|leg
+le pied|foot
+le genou|knee
+le dos|back
+le ventre|stomach, belly
+le cœur|heart
+le sang|blood
+la peau|skin
+la maison|house, home
+l'appartement (m)|apartment
+la chambre|bedroom
+la pièce|room, coin, play
+la cuisine|kitchen, cooking
+la salle de bain|bathroom
+le salon|living room
+le jardin|garden
+la porte|door
+la fenêtre|window
+le mur|wall
+le sol|floor, ground
+le plafond|ceiling
+le toit|roof
+l'escalier (m)|stairs
+la table|table
+la chaise|chair
+le lit|bed
+le canapé|sofa
+le miroir|mirror
+la lampe|lamp
+la clé|key
+l'horloge (f)|clock
+la montre|watch
+le téléphone|telephone
+le portable|cell phone, laptop
+l'ordinateur (m)|computer
+la télévision|television
+la radio|radio
+le livre|book
+le cahier|notebook
+le crayon|pencil
+le stylo|pen
+le papier|paper
+la lettre|letter
+la photo|photo
+la boîte|box
+le sac|bag
+les vêtements (m)|clothes
+la chemise|shirt
+le t-shirt|t-shirt
+le pantalon|pants, trousers
+la jupe|skirt
+la robe|dress
+la chaussure|shoe
+le manteau|coat
+le chapeau|hat
+la nourriture|food
+le repas|meal
+l'eau (f)|water
+le pain|bread
+le lait|milk
+l'œuf (m)|egg
+le fromage|cheese
+la viande|meat
+le poulet|chicken
+le poisson|fish
+le riz|rice
+la soupe|soup
+la salade|salad
+le fruit|fruit
+la pomme|apple
+l'orange (f)|orange
+la banane|banana
+la fraise|strawberry
+le légume|vegetable
+la pomme de terre|potato
+la tomate|tomato
+l'oignon (m)|onion
+l'ail (m)|garlic
+le sel|salt
+le sucre|sugar
+le café|coffee, café
+le thé|tea
+le jus|juice
+le vin|wine
+la bière|beer
+le dessert|dessert
+le petit-déjeuner|breakfast
+le déjeuner|lunch
+le dîner|dinner
+l'assiette (f)|plate
+le verre|glass
+la tasse|cup
+le couteau|knife
+la fourchette|fork
+la cuillère|spoon
+le gâteau|cake
+le biscuit|cookie
+le chocolat|chocolate
+la glace|ice cream, ice, mirror
+le beurre|butter
+l'huile (f)|oil
+le poivre|pepper
+la farine|flour
+le jambon|ham
+la saucisse|sausage
+les haricots (m)|beans
+le maïs|corn
+la carotte|carrot
+la laitue|lettuce
+le concombre|cucumber
+le citron|lemon
+le raisin|grape
+l'ananas (m)|pineapple
+la pastèque|watermelon
+le melon|melon
+la cerise|cherry
+la poire|pear
+la pêche|peach, fishing
+la noix|walnut, nut
+la boisson|drink
+la bouteille|bottle
+la recette|recipe
+le four|oven
+le frigo|fridge
+la ville|city
+le village|village
+le pays|country
+le monde|world
+la rue|street
+la place|square, seat, space
+le quartier|neighborhood
+le bâtiment|building
+le magasin|store, shop
+le marché|market
+le supermarché|supermarket
+le restaurant|restaurant
+l'hôtel (m)|hotel
+la banque|bank
+l'hôpital (m)|hospital
+l'école (f)|school
+l'université (f)|university
+l'église (f)|church
+le musée|museum
+la bibliothèque|library
+le parc|park
+la plage|beach
+l'aéroport (m)|airport
+la gare|train station
+le pont|bridge
+le bureau|office, desk
+l'usine (f)|factory
+la pharmacie|pharmacy
+la boulangerie|bakery
+la boucherie|butcher shop
+la poste|post office
+la voiture|car
+le bus|bus
+le train|train
+l'avion (m)|airplane
+le bateau|boat
+le vélo|bike
+le taxi|taxi
+le métro|subway
+le chemin|path, way
+la route|road
+le voyage|trip, journey
+le billet|ticket, bill (money)
+la carte|map, card, menu
+la valise|suitcase
+le passeport|passport
+la frontière|border
+le touriste|tourist
+la réservation|reservation
+l'arrivée (f)|arrival
+le départ|departure
+la sortie|exit
+l'entrée (f)|entrance, starter
+le siège|seat
+la gauche|left
+la droite|right
+tout droit|straight ahead
+le feu rouge|traffic light, red light
+le trottoir|sidewalk
+la circulation|traffic
+l'accident (m)|accident
+l'essence (f)|gasoline
+l'ascenseur (m)|elevator
+le garage|garage
+le balcon|balcony
+la piscine|swimming pool
+la cheminée|fireplace, chimney
+le coin|corner
+la serviette|towel, napkin
+le savon|soap
+le shampoing|shampoo
+la brosse|brush
+l'oreiller (m)|pillow
+la couverture|blanket
+le drap|bed sheet
+l'armoire (f)|wardrobe
+le tiroir|drawer
+le tapis|rug
+le rideau|curtain
+l'étage (m)|floor (level)
+l'heure (f)|hour, time
+la minute|minute
+la seconde|second
+le jour|day
+la journée|day (duration)
+la semaine|week
+le mois|month
+l'an (m)|year
+l'année (f)|year (duration)
+le matin|morning
+l'après-midi (m)|afternoon
+le soir|evening
+la soirée|evening, party
+la nuit|night
+aujourd'hui|today
+demain|tomorrow
+hier|yesterday
+le week-end|weekend
+lundi|Monday
+mardi|Tuesday
+mercredi|Wednesday
+jeudi|Thursday
+vendredi|Friday
+samedi|Saturday
+dimanche|Sunday
+janvier|January
+février|February
+mars|March
+avril|April
+mai|May
+juin|June
+juillet|July
+août|August
+septembre|September
+octobre|October
+novembre|November
+décembre|December
+le printemps|spring
+l'été (m)|summer
+l'automne (m)|autumn, fall
+l'hiver (m)|winter
+l'anniversaire (m)|birthday
+la fête|party, holiday
+les vacances (f)|vacation
+le temps|time, weather
+le moment|moment
+la fois|time, occasion
+le siècle|century
+l'âge (m)|age
+l'époque (f)|era, period
+le passé|past
+le présent|present
+l'avenir (m)|future
+le soleil|sun
+la lune|moon
+l'étoile (f)|star
+le ciel|sky
+le nuage|cloud
+la pluie|rain
+la neige|snow
+le vent|wind
+l'air (m)|air
+le feu|fire
+la terre|earth, land
+la mer|sea
+la rivière|river
+le fleuve|large river
+le lac|lake
+la montagne|mountain
+la forêt|forest
+l'arbre (m)|tree
+la fleur|flower
+la plante|plant
+la feuille|leaf, sheet of paper
+la pierre|stone
+le sable|sand
+l'île (f)|island
+la campagne|countryside
+l'orage (m)|storm
+le tonnerre|thunder
+l'éclair (m)|lightning
+le brouillard|fog
+la vague|wave
+le désert|desert
+la grotte|cave
+le volcan|volcano
+le paysage|landscape
+la nature|nature
+l'environnement (m)|environment
+les déchets (m)|waste, trash
+l'énergie (f)|energy
+l'animal (m)|animal
+le chien|dog
+le chat|cat
+le cheval|horse
+la vache|cow
+le cochon|pig
+le mouton|sheep
+l'oiseau (m)|bird
+la souris|mouse
+le lapin|rabbit
+l'ours (m)|bear
+le lion|lion
+le serpent|snake
+l'insecte (m)|insect
+le papillon|butterfly
+le canard|duck
+la poule|hen
+le singe|monkey
+le tigre|tiger
+l'éléphant (m)|elephant
+le loup|wolf
+le renard|fox
+la baleine|whale
+le requin|shark
+l'abeille (f)|bee
+la fourmi|ant
+l'araignée (f)|spider
+la mouche|fly
+la grenouille|frog
+la tortue|turtle
+le travail|work, job
+l'argent (m)|money, silver
+le prix|price, prize
+le compte|account
+l'addition (f)|bill (restaurant)
+l'entreprise (f)|company
+les affaires (f)|business
+la réunion|meeting
+le problème|problem
+la question|question
+la réponse|answer
+l'idée (f)|idea
+la raison|reason
+la vérité|truth
+le mensonge|lie
+le nom|name, noun
+le mot|word
+la phrase|sentence
+la langue|language, tongue
+l'histoire (f)|history, story
+le conte|tale
+les nouvelles (f)|news
+le journal|newspaper, diary
+le magazine|magazine
+le film|movie
+la musique|music
+la chanson|song
+le jeu|game
+le sport|sport
+le foot|soccer, football
+l'équipe (f)|team
+le cours|class, course
+la leçon|lesson
+l'examen (m)|exam
+les devoirs (m)|homework
+la note|grade, note
+l'exemple (m)|example
+le numéro|number (phone, house)
+le nombre|number (quantity)
+la couleur|color
+la forme|shape, form
+la taille|size, height
+le côté|side
+le centre|center
+la fin|end
+le début|beginning
+la moitié|half
+le reste|rest, remainder
+la façon|way, manner
+la manière|way, manner
+l'endroit (m)|place
+le lieu|place
+la chose|thing
+le cas|case
+le fait|fact
+la situation|situation
+le changement|change
+le système|system
+le gouvernement|government
+la loi|law
+la guerre|war
+la paix|peace
+la politique|politics, policy
+la société|society, company
+la culture|culture
+l'art (m)|art
+la science|science
+la santé|health
+la maladie|illness
+la douleur|pain
+le médicament|medicine
+la mort|death
+la vie|life
+l'amour (m)|love
+la peur|fear
+la joie|joy
+la tristesse|sadness
+l'espoir (m)|hope
+le rêve|dream
+la chance|luck, chance
+le succès|success
+l'erreur (f)|mistake
+l'aide (f)|help
+le cadeau|gift
+la surprise|surprise
+la voix|voice
+le bruit|noise
+le son|sound
+la lumière|light
+l'ombre (f)|shadow, shade
+la chaleur|heat
+le froid|cold
+l'envie (f)|desire
+le besoin|need
+la liberté|freedom
+la force|strength
+le pouvoir|power
+l'esprit (m)|mind, spirit
+l'âme (f)|soul
+la pensée|thought
+la mémoire|memory
+le souvenir|memory, souvenir
+l'expérience (f)|experience
+l'occasion (f)|opportunity, bargain
+le message|message
+le courriel|email
+la page|page
+l'écran (m)|screen
+le réseau|network
+l'application (f)|app
+le mot de passe|password
+le fichier|file
+le dessin|drawing
+la peinture|painting, paint
+la danse|dance
+le cinéma|cinema
+le théâtre|theater
+le concert|concert
+le roman|novel
+le poème|poem
+le journaliste|journalist
+le dentiste|dentist
+le rendez-vous|appointment, date
+l'horaire (m)|schedule
+le projet|plan, project
+le but|goal
+le salaire|salary
+la dette|debt
+l'impôt (m)|tax
+le contrat|contract
+le client|customer
+le produit|product
+la marque|brand
+la vente|sale
+l'achat (m)|purchase
+le reçu|receipt
+la monnaie|change (coins), currency
+la qualité|quality
+la quantité|quantity
+le poids|weight
+la mesure|measure
+le mètre|meter
+le kilomètre|kilometer
+le kilo|kilogram
+le litre|liter
+la température|temperature
+le climat|climate
+bon|good
+mauvais|bad
+grand|big, tall
+petit|small
+haut|high
+bas|low
+long|long
+court|short
+large|wide
+gros|big, fat
+mince|thin, slim
+jeune|young
+vieux|old
+âgé|elderly
+beau|beautiful, handsome
+joli|pretty
+laid|ugly
+nouveau|new
+neuf|brand new, nine
+ancien|old, former
+riche|rich
+pauvre|poor
+facile|easy
+difficile|difficult
+important|important
+possible|possible
+impossible|impossible
+nécessaire|necessary
+meilleur|better, best
+pire|worse, worst
+même|same, even
+différent|different
+clair|clear, light
+sombre|dark
+chaud|hot, warm
+froid|cold
+frais|fresh, cool
+sec|dry
+mouillé|wet
+propre|clean, own
+sale|dirty
+plein|full
+vide|empty
+ouvert|open
+fermé|closed
+rapide|fast
+lent|slow
+fort|strong, loud
+faible|weak
+dur|hard
+doux|soft, sweet, mild
+lourd|heavy
+léger|light (weight)
+cher|expensive, dear
+bon marché|cheap
+heureux|happy
+content|glad
+triste|sad
+fatigué|tired
+malade|sick
+occupé|busy
+libre|free
+prêt|ready
+bête|silly, stupid
+intelligent|intelligent
+gentil|kind, nice
+sympa|nice, friendly
+calme|calm
+nerveux|nervous
+fâché|angry
+inquiet|worried
+ennuyeux|boring
+drôle|funny
+amusant|fun
+intéressant|interesting
+sûr|sure, safe
+dangereux|dangerous
+vrai|true
+faux|false
+réel|real
+seul|alone, only
+unique|only, unique
+dernier|last
+prochain|next
+suivant|following
+premier|first
+deuxième|second
+troisième|third
+proche|near, close
+lointain|far, distant
+blanc|white
+noir|black
+rouge|red
+bleu|blue
+vert|green
+jaune|yellow
+gris|gray
+marron|brown
+rose|pink, rose
+violet|purple
+orange|orange (color)
+deux|two
+trois|three
+quatre|four
+cinq|five
+six|six
+sept|seven
+huit|eight
+dix|ten
+onze|eleven
+douze|twelve
+vingt|twenty
+trente|thirty
+cent|one hundred
+mille|one thousand
+le million|million
+zéro|zero
+la douzaine|dozen
+quoi|what
+quel|which, what
+combien|how much, how many
+comment|how
+quand|when
+pourquoi|why
+parce que|because
+ici|here
+là|there
+là-bas|over there
+près|near
+loin|far
+dedans|inside
+dehors|outside
+en haut|upstairs, up
+en bas|downstairs, down
+devant|in front of
+derrière|behind
+entre|between
+contre|against
+vers|toward, around (time)
+pendant|during
+depuis|since, for
+avant|before
+après|after
+jusqu'à|until
+selon|according to
+autour|around
+malgré|despite
+souvent|often
+parfois|sometimes
+quelquefois|sometimes
+presque|almost
+peut-être|maybe
+bientôt|soon
+tard|late
+tôt|early
+ensuite|then, next
+puis|then
+alors|so, then
+donc|so, therefore
+pourtant|however
+cependant|however
+quand même|still, anyway
+d'abord|first, at first
+enfin|finally, at last
+maintenant|now
+tout de suite|right away
+ensemble|together
+lentement|slowly
+vite|quickly
+vraiment|really
+surtout|especially
+seulement|only
+beaucoup|a lot, much
+peu|little, few
+trop|too much
+assez|enough, quite
+moins|less
+autant|as much
+chaque|each
+plusieurs|several
+quelques|some, a few
+aucun|none, no
+tous|all (plural)
+autre|other
+mon|my
+ton|your (informal)
+son|his, her, its
+notre|our
+votre|your (formal, plural)
+leur|their
+me|me, myself
+te|you, yourself
+se|himself, herself, oneself
+lui|him, to him, to her
+eux|them
+moi|me
+toi|you
+ceci|this
+cela|that
+ça|that, it
+bonjour|hello, good morning
+bonsoir|good evening
+salut|hi, bye
+au revoir|goodbye
+merci|thank you
+s'il vous plaît|please (formal)
+s'il te plaît|please (informal)
+de rien|you're welcome
+pardon|excuse me, sorry
+excusez-moi|excuse me
+désolé|sorry
+bonne nuit|good night
+à bientôt|see you soon
+à demain|see you tomorrow
+bienvenue|welcome
+santé|cheers
+d'accord|okay, agreed
+bien sûr|of course
+attention|careful, watch out
+félicitations|congratulations
+bon appétit|enjoy your meal
+oui|yes
+non|no
+voici|here is
+voilà|there is, there you go
+il y a|there is, there are, ago
+c'est|it is, this is
+avoir faim|to be hungry
+avoir soif|to be thirsty
+avoir peur|to be afraid
+avoir besoin de|to need
+avoir raison|to be right
+avoir tort|to be wrong
+avoir chaud|to be hot
+avoir froid|to be cold
+avoir sommeil|to be sleepy
+faire attention|to pay attention
+faire la cuisine|to cook
+faire les courses|to go grocery shopping
+faire la vaisselle|to do the dishes
+la vaisselle|dishes
+les courses (f)|groceries, errands
+la machine à laver|washing machine
+la cuisinière|stove, cook (female)
+le parapluie|umbrella
+les lunettes (f)|glasses
+le portefeuille|wallet
+la ceinture|belt
+la chaussette|sock
+la veste|jacket
+le pull|sweater
+l'écharpe (f)|scarf
+le gant|glove
+la bague|ring
+le collier|necklace
+le bijou|jewel
+la poche|pocket
+le bouton|button
+</script>
+<script>
+(function(){
+"use strict";
+var CFG={"id": "fr", "from": "FR", "to": "EN", "kind": "word"};
+var W=[];(document.getElementById("data").textContent||"").split("\n").forEach(function(l){l=l.trim();if(!l)return;var p=l.split("|");if(p.length>=2&&p[0]&&p[1])W.push(p)});
+if(!W.length)return;
+var KEY="notomantra-flash-"+CFG.id;
+var mem={};
+function load(){try{var s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return mem[KEY]||null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){mem[KEY]=st}}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function freshDeck(){var k={};st.known.forEach(function(i){k[i]=1});var d=[];for(var i=0;i<W.length;i++)if(!k[i])d.push(i);return shuffle(d)}
+var st=load();
+if(!st||!Array.isArray(st.known)||!Array.isArray(st.deck)||st.n!==W.length){st={n:W.length,known:[],deck:[],dir:0,open:false}}
+if(!st.deck.length)st.deck=freshDeck();
+var $=function(id){return document.getElementById(id)};
+var card=$("card"),front=$("front"),back=$("back"),menu=$("menu");
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function render(){
+  $("dir").textContent=st.dir?CFG.to+" → "+CFG.from:CFG.from+" → "+CFG.to;
+  var known=st.known.length,total=W.length;
+  $("barfill").style.width=(known/total*100).toFixed(1)+"%";
+  $("count").textContent=known.toLocaleString("en-US")+" / "+total.toLocaleString("en-US")+" known";
+  card.classList.toggle("open",!!st.open);
+  if(!st.deck.length){
+    front.className="front en";front.innerHTML='<span class="done">All '+total.toLocaleString("en-US")+' marked as known.</span>';
+    back.innerHTML='<div class="sub">Tap … then Reset progress to go again.</div>';card.classList.add("open");return;
+  }
+  var w=W[st.deck[0]];
+  var f=CFG.kind;
+  if(!st.dir){
+    front.className="front"+(f==="kanji"?" big":"");
+    front.textContent=w[0];
+    back.innerHTML='<div class="meaning">'+esc(w[1])+'</div>'+extra(w);
+  }else{
+    front.className="front en";
+    front.textContent=w[1];
+    back.innerHTML='<div class="meaning native">'+esc(w[0])+'</div>'+extra(w);
+  }
+}
+function extra(w){
+  if(CFG.kind==="kanji"){
+    var h="";
+    if(w[2])h+='<div class="sub"><b>ON</b>'+esc(w[2])+'</div>';
+    if(w[3])h+='<div class="sub"><b>KUN</b>'+esc(w[3])+'</div>';
+    if(w[4])h+='<div><span class="pill">JLPT '+esc(w[4])+'</span></div>';
+    return h;
+  }
+  if(CFG.kind==="ko"&&w[2])return '<div class="sub">'+esc(w[2])+'</div>';
+  return "";
+}
+function flip(){if(menu.classList.contains("show"))return;if(!st.deck.length)return;st.open=!st.open;save();render()}
+function next(known){
+  if(!st.deck.length)return;
+  var i=st.deck.shift();
+  if(known){if(st.known.indexOf(i)<0)st.known.push(i)}
+  else{var pos=Math.min(st.deck.length,8+Math.floor(Math.random()*12));st.deck.splice(pos,0,i)}
+  st.open=false;save();render();
+}
+card.addEventListener("click",function(e){if(menu.contains(e.target))return;flip()});
+card.addEventListener("keydown",function(e){if(e.target!==card)return;if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}});
+document.addEventListener("keydown",function(e){if(menu.classList.contains("show"))return;if(e.key==="ArrowRight")next(false);if(e.key==="ArrowUp")next(true)});
+$("again").addEventListener("click",function(){next(false)});
+$("know").addEventListener("click",function(){next(true)});
+$("dir").addEventListener("click",function(){st.dir=st.dir?0:1;st.open=false;save();render()});
+$("more").addEventListener("click",function(e){e.stopPropagation();
+  $("menuinfo").textContent=st.known.length+" known, "+st.deck.length+" still in rotation. Known words are skipped until you reset.";
+  menu.classList.toggle("show")});
+$("close").addEventListener("click",function(e){e.stopPropagation();menu.classList.remove("show")});
+$("reset").addEventListener("click",function(e){e.stopPropagation();st={n:W.length,known:[],deck:[],dir:st.dir,open:false};st.deck=freshDeck();save();menu.classList.remove("show");render()});
+render();
+})();
+</script>
+</body>
+</html>

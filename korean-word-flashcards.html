@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Korean Flashcards</title>
+<style>
+:root{
+  --bg:#f7f0e3;
+  --card:#fbf6ec;
+  --line:#dcc6a3;
+  --line-soft:#e9dbc2;
+  --ink:#8c6c45;
+  --ink-soft:#ae936f;
+  --ink-faint:#c7b291;
+  --good:#9aa57a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple SD Gothic Neo","Malgun Gothic","Hiragino Sans","Yu Gothic","Noto Sans CJK JP","Noto Sans KR",sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+.wrap{container-type:inline-size;height:100%;min-height:210px;padding:4px}
+.w{height:100%;display:flex;flex-direction:column;gap:10px;background:var(--bg);border:3px solid var(--line);border-radius:20px;padding:14px 14px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;gap:6px;flex-shrink:0}
+button{font:inherit;color:var(--ink);background:transparent;border:2px solid var(--line);border-radius:999px;cursor:pointer;transition:background .15s,border-color .15s,transform .1s;-webkit-tap-highlight-color:transparent}
+button:hover{background:var(--card);border-color:var(--ink-faint)}
+button:active{transform:scale(.96)}
+button:focus-visible{outline:2px solid var(--ink-soft);outline-offset:2px}
+.chip{font-size:11px;font-weight:600;padding:4px 10px;letter-spacing:.04em}
+.icon{width:28px;height:28px;display:grid;place-items:center;padding:0}
+.icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card{flex:1;min-height:110px;position:relative;container-type:size;background:var(--card);border:2px solid var(--line-soft);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px 12px;cursor:pointer;user-select:none;overflow:hidden}
+.front{font-family:"Iowan Old Style","Palatino Linotype",Georgia,"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:clamp(20px,min(9cqi,17cqh),44px);line-height:1.15;font-weight:500;color:var(--ink);word-break:keep-all;overflow-wrap:anywhere}
+.front.big{font-size:clamp(36px,min(22cqi,30cqh),88px);line-height:1}
+.front.en{font-family:inherit;font-size:clamp(16px,min(6.5cqi,13cqh),30px);font-weight:600}
+.back{gap:2px;margin-top:min(10px,3cqh);display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s}
+.card.open .back{opacity:1;transform:none}
+.meaning{font-size:clamp(13px,min(4.6cqi,9cqh),19px);font-weight:600;color:var(--ink)}
+.meaning.native{font-family:"Iowan Old Style",Georgia,"Hiragino Mincho ProN","Yu Mincho","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:clamp(18px,min(8cqi,15cqh),36px);font-weight:500}
+.sub{font-size:12px;color:var(--ink-soft);line-height:1.5}
+.sub b{font-weight:600;color:var(--ink-soft);letter-spacing:.04em;margin-right:3px}
+.hint{position:absolute;bottom:8px;left:0;right:0;font-size:11px;color:var(--ink-faint);transition:opacity .2s}
+.card.open .hint{opacity:0}
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;border:1.5px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink-soft)}
+.actions{display:flex;gap:8px}
+.actions button{flex:1;padding:9px 6px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+.actions .know{background:var(--card)}
+.actions svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.prog{display:flex;align-items:center;gap:8px}
+.bar{flex:1;height:6px;border-radius:99px;background:var(--line-soft);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ink-faint);border-radius:99px;transition:width .3s}
+.count{font-size:11px;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+.menu{position:absolute;inset:0;background:var(--bg);border-radius:12px;padding:14px;display:none;flex-direction:column;gap:10px;justify-content:center;cursor:default;text-align:left;z-index:2}
+.menu.show{display:flex}
+.menu h4{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.menu p{font-size:12px;color:var(--ink-soft);line-height:1.5}
+.menu .row{display:flex;gap:8px;flex-wrap:wrap}
+.menu .row button{font-size:12px;font-weight:600;padding:6px 12px}
+.menu .credit{font-size:10px;color:var(--ink-faint)}
+.done{font-size:15px;font-weight:600}
+/* compact: narrow columns */
+@container (max-width:300px){
+  .w{padding:10px;gap:8px;border-radius:16px}
+  .tag{font-size:10px}
+  .wc{display:none}
+  .chip{padding:3px 8px;font-size:10px}
+  .actions button span{display:none}
+  .actions button{padding:8px 4px}
+  .hint{display:none}
+  .sub{font-size:11px}
+}
+@container (max-width:200px){
+  .count{display:none}
+  .tools .icon{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="w" id="app">
+  <div class="top">
+    <div class="tag" id="tag">Korean<span class="wc"> · 1,016 words</span></div>
+    <div class="tools">
+      <button class="chip" id="dir" title="Switch direction" aria-label="Switch direction"></button>
+      <button class="icon" id="more" title="Options" aria-label="Options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+    </div>
+  </div>
+  <div class="card" id="card" role="button" tabindex="0" aria-label="Flashcard, tap to reveal">
+    <div class="front" id="front"></div>
+    <div class="back" id="back"></div>
+    <div class="hint" id="hint">tap to reveal</div>
+    <div class="menu" id="menu">
+      <h4>Options</h4>
+      <p id="menuinfo"></p>
+      <div class="row">
+        <button id="reset">Reset progress</button>
+        <button id="close">Close</button>
+      </div>
+      <p class="credit">Saved only in this browser. Nothing is sent anywhere.</p>
+    </div>
+  </div>
+  <div class="actions">
+    <button id="again" aria-label="Show again later"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><span>Again</span></button>
+    <button id="know" class="know" aria-label="I know this"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span>Know it</span></button>
+  </div>
+  <div class="prog"><div class="bar"><i id="barfill"></i></div><div class="count" id="count"></div></div>
+</div>
+</div>
+<script type="text/plain" id="data">
+안녕하세요|hello|annyeonghaseyo
+안녕히 가세요|goodbye (to someone leaving)|annyeonghi gaseyo
+안녕히 계세요|goodbye (to someone staying)|annyeonghi gyeseyo
+감사합니다|thank you|gamsahamnida
+고맙습니다|thank you|gomapseumnida
+죄송합니다|I'm sorry (formal)|joesonghamnida
+미안해요|I'm sorry|mianhaeyo
+괜찮아요|it's okay, I'm fine|gwaenchanayo
+네|yes|ne
+아니요|no|aniyo
+잠깐만요|just a moment|jamkkanmanyo
+실례합니다|excuse me|sillyehamnida
+반갑습니다|nice to meet you|bangapseumnida
+축하합니다|congratulations|chukahamnida
+맛있게 드세요|enjoy your meal|masitge deuseyo
+잘 먹겠습니다|I will eat well (before a meal)|jal meokgetseumnida
+잘 자요|good night|jal jayo
+화이팅|you can do it, go for it|hwaiting
+사람|person|saram
+남자|man|namja
+여자|woman|yeoja
+아이|child|ai
+아기|baby|agi
+가족|family|gajok
+아버지|father|abeoji
+어머니|mother|eomeoni
+아빠|dad|appa
+엄마|mom|eomma
+부모님|parents|bumonim
+아들|son|adeul
+딸|daughter|ttal
+형|older brother (said by a male)|hyeong
+오빠|older brother (said by a female)|oppa
+누나|older sister (said by a male)|nuna
+언니|older sister (said by a female)|eonni
+동생|younger sibling|dongsaeng
+할아버지|grandfather|harabeoji
+할머니|grandmother|halmeoni
+삼촌|uncle|samchon
+남편|husband|nampyeon
+아내|wife|anae
+친구|friend|chingu
+남자친구|boyfriend|namjachingu
+여자친구|girlfriend|yeojachingu
+선생님|teacher|seonsaengnim
+학생|student|haksaeng
+의사|doctor|uisa
+간호사|nurse|ganhosa
+경찰|police|gyeongchal
+회사원|office worker|hoesawon
+요리사|chef, cook|yorisa
+가수|singer|gasu
+배우|actor|baeu
+작가|writer|jakga
+손님|guest, customer|sonnim
+이웃|neighbor|iut
+사장님|boss, owner|sajangnim
+나|I, me (casual)|na
+저|I, me (polite)|jeo
+너|you (casual)|neo
+우리|we, our|uri
+저희|we, our (humble)|jeohui
+그|he, that|geu
+그녀|she|geunyeo
+그들|they|geudeul
+이것|this thing|igeot
+그것|that thing|geugeot
+저것|that thing over there|jeogeot
+여기|here|yeogi
+거기|there|geogi
+저기|over there|jeogi
+누구|who|nugu
+무엇|what|mueot
+뭐|what (casual)|mwo
+어디|where|eodi
+언제|when|eonje
+왜|why|wae
+어떻게|how|eotteoke
+얼마|how much|eolma
+몇|how many|myeot
+어느|which|eoneu
+하다|to do|hada
+있다|to exist, to have|itda
+없다|to not exist, to not have|eopda
+이다|to be|ida
+아니다|to not be|anida
+가다|to go|gada
+오다|to come|oda
+보다|to see, to watch|boda
+먹다|to eat|meokda
+마시다|to drink|masida
+자다|to sleep|jada
+일어나다|to get up, to wake up|ireonada
+앉다|to sit|anda
+서다|to stand|seoda
+걷다|to walk|geotda
+뛰다|to run, to jump|ttwida
+말하다|to speak, to say|malhada
+이야기하다|to talk, to tell|iyagihada
+듣다|to listen, to hear|deutda
+읽다|to read|ikda
+쓰다|to write, to use; to be bitter; to wear (a hat)|sseuda
+배우다|to learn|baeuda
+가르치다|to teach|gareuchida
+공부하다|to study|gongbuhada
+일하다|to work|ilhada
+놀다|to play, to hang out|nolda
+만나다|to meet|mannada
+사다|to buy|sada
+팔다|to sell|palda
+주다|to give|juda
+받다|to receive|batda
+알다|to know|alda
+모르다|to not know|moreuda
+생각하다|to think|saenggakada
+좋아하다|to like|joahada
+싫어하다|to dislike|sireohada
+사랑하다|to love|saranghada
+원하다|to want|wonhada
+기다리다|to wait|gidarida
+찾다|to look for, to find|chatda
+열다|to open|yeolda
+닫다|to close|datda
+만들다|to make|mandeulda
+요리하다|to cook|yorihada
+씻다|to wash|ssitda
+입다|to wear (clothes)|ipda
+벗다|to take off (clothes)|beotda
+타다|to ride, to get on|tada
+내리다|to get off, to fall (rain)|naerida
+들어가다|to go in|deureogada
+나가다|to go out|nagada
+들어오다|to come in|deureooda
+나오다|to come out|naoda
+돌아가다|to go back|doragada
+돌아오다|to come back|doraoda
+도착하다|to arrive|dochakada
+출발하다|to depart|chulbalhada
+시작하다|to start|sijakada
+끝나다|to end, to be over|kkeunnada
+끝내다|to finish (something)|kkeunnaeda
+노래하다|to sing|noraehada
+춤추다|to dance|chumchuda
+웃다|to laugh, to smile|utda
+울다|to cry|ulda
+살다|to live|salda
+죽다|to die|jukda
+도와주다|to help|dowajuda
+부르다|to call, to sing|bureuda
+전화하다|to make a phone call|jeonhwahada
+보내다|to send|bonaeda
+잊다|to forget|itda
+잊어버리다|to forget completely|ijeobeorida
+기억하다|to remember|gieokada
+이해하다|to understand|ihaehada
+묻다|to ask|mutda
+대답하다|to answer|daedapada
+결정하다|to decide|gyeoljeonghada
+선택하다|to choose|seontaekada
+바꾸다|to change, to exchange|bakkuda
+쉬다|to rest|swida
+운동하다|to exercise|undonghada
+여행하다|to travel|yeohaenghada
+운전하다|to drive|unjeonhada
+청소하다|to clean|cheongsohada
+빨래하다|to do laundry|ppallaehada
+준비하다|to prepare|junbihada
+연습하다|to practice|yeonseupada
+사용하다|to use|sayonghada
+필요하다|to need, to be necessary|piryohada
+걱정하다|to worry|geokjeonghada
+화나다|to get angry|hwanada
+놀라다|to be surprised|nollada
+믿다|to believe|mitda
+느끼다|to feel|neukkida
+잡다|to catch, to hold|japda
+놓다|to put down|nota
+넣다|to put in|neota
+빼다|to take out|ppaeda
+들다|to lift, to hold|deulda
+걸다|to hang, to call (phone)|geolda
+켜다|to turn on|kyeoda
+끄다|to turn off|kkeuda
+빌리다|to borrow|billida
+갚다|to pay back|gapda
+고치다|to fix|gochida
+잃어버리다|to lose|ireobeorida
+이기다|to win|igida
+지다|to lose (a game)|jida
+그리다|to draw|geurida
+찍다|to take (a photo)|jjikda
+깨다|to wake up, to break|kkaeda
+떨어지다|to fall, to drop|tteoreojida
+가지다|to have, to own|gajida
+되다|to become|doeda
+보이다|to be seen, to show|boida
+들리다|to be heard|deullida
+알리다|to inform|allida
+모으다|to collect|moeuda
+버리다|to throw away|beorida
+닦다|to wipe, to brush (teeth)|dakda
+자르다|to cut|jareuda
+때리다|to hit|ttaerida
+던지다|to throw|deonjida
+밀다|to push|milda
+당기다|to pull|danggida
+결혼하다|to marry|gyeolhonhada
+태어나다|to be born|taeeonada
+자라다|to grow up|jarada
+몸|body|mom
+머리|head, hair|meori
+얼굴|face|eolgul
+눈|eye, snow|nun
+코|nose|ko
+입|mouth|ip
+귀|ear|gwi
+이|tooth; two (Sino), this|i
+목|neck, throat|mok
+어깨|shoulder|eokkae
+팔|arm; eight (Sino)|pal
+손|hand|son
+손가락|finger|songarak
+다리|leg, bridge|dari
+발|foot|bal
+무릎|knee|mureup
+등|back|deung
+배|stomach, boat, pear|bae
+가슴|chest|gaseum
+마음|heart, mind|maeum
+피|blood|pi
+피부|skin|pibu
+집|house, home|jip
+방|room|bang
+부엌|kitchen|bueok
+화장실|bathroom, restroom|hwajangsil
+거실|living room|geosil
+침실|bedroom|chimsil
+정원|garden|jeongwon
+문|door|mun
+창문|window|changmun
+벽|wall|byeok
+바닥|floor|badak
+지붕|roof|jibung
+계단|stairs|gyedan
+책상|desk|chaeksang
+의자|chair|uija
+침대|bed|chimdae
+소파|sofa|sopa
+거울|mirror|geoul
+열쇠|key|yeolsoe
+시계|clock, watch|sigye
+전화|telephone|jeonhwa
+휴대폰|cell phone|hyudaepon
+컴퓨터|computer|keompyuteo
+텔레비전|television|tellebijeon
+냉장고|refrigerator|naengjanggo
+세탁기|washing machine|setakgi
+에어컨|air conditioner|eeokeon
+책|book|chaek
+공책|notebook|gongchaek
+연필|pencil|yeonpil
+볼펜|ballpoint pen|bolpen
+종이|paper|jongi
+편지|letter|pyeonji
+사진|photo|sajin
+상자|box|sangja
+가방|bag|gabang
+지갑|wallet|jigap
+우산|umbrella|usan
+안경|glasses|angyeong
+옷|clothes|ot
+셔츠|shirt|syeocheu
+티셔츠|t-shirt|tisyeocheu
+바지|pants|baji
+치마|skirt|chima
+원피스|dress|wonpiseu
+신발|shoes|sinbal
+양말|socks|yangmal
+모자|hat|moja
+코트|coat|koteu
+수건|towel|sugeon
+비누|soap|binu
+베개|pillow|begae
+이불|blanket, duvet|ibul
+음식|food|eumsik
+밥|rice, meal|bap
+물|water|mul
+빵|bread|ppang
+우유|milk|uyu
+계란|egg|gyeran
+고기|meat|gogi
+소고기|beef|sogogi
+돼지고기|pork|dwaejigogi
+닭고기|chicken (meat)|dakgogi
+생선|fish (food)|saengseon
+김치|kimchi|gimchi
+국|soup|guk
+라면|instant noodles|ramyeon
+과일|fruit|gwail
+사과|apple, apology|sagwa
+바나나|banana|banana
+딸기|strawberry|ttalgi
+포도|grape|podo
+수박|watermelon|subak
+귤|tangerine|gyul
+복숭아|peach|boksunga
+채소|vegetable|chaeso
+야채|vegetable|yachae
+감자|potato|gamja
+고구마|sweet potato|goguma
+양파|onion|yangpa
+마늘|garlic|maneul
+당근|carrot|danggeun
+버섯|mushroom|beoseot
+소금|salt|sogeum
+설탕|sugar|seoltang
+간장|soy sauce|ganjang
+고추|chili pepper|gochu
+커피|coffee|keopi
+차|tea, car|cha
+주스|juice|juseu
+술|alcohol, liquor|sul
+맥주|beer|maekju
+소주|soju|soju
+아침|morning, breakfast|achim
+점심|lunch, midday|jeomsim
+저녁|evening, dinner|jeonyeok
+간식|snack|gansik
+과자|snack, cracker|gwaja
+케이크|cake|keikeu
+아이스크림|ice cream|aiseukeurim
+그릇|bowl|geureut
+접시|plate|jeopsi
+컵|cup|keop
+숟가락|spoon|sutgarak
+젓가락|chopsticks|jeotgarak
+칼|knife|kal
+도시|city|dosi
+마을|village|maeul
+나라|country|nara
+세계|world|segye
+한국|Korea|hanguk
+서울|Seoul|seoul
+길|road, way|gil
+거리|street, distance|geori
+동네|neighborhood|dongne
+건물|building|geonmul
+가게|store, shop|gage
+시장|market, mayor|sijang
+마트|supermarket|mateu
+식당|restaurant|sikdang
+카페|café|kape
+호텔|hotel|hotel
+은행|bank|eunhaeng
+병원|hospital|byeongwon
+약국|pharmacy|yakguk
+학교|school|hakgyo
+대학교|university|daehakgyo
+교회|church|gyohoe
+절|Buddhist temple, bow|jeol
+박물관|museum|bangmulgwan
+도서관|library|doseogwan
+공원|park|gongwon
+바다|sea|bada
+해변|beach|haebyeon
+공항|airport|gonghang
+역|station|yeok
+지하철|subway|jihacheol
+버스|bus|beoseu
+기차|train|gicha
+비행기|airplane|bihaenggi
+자전거|bicycle|jajeongeo
+택시|taxi|taeksi
+자동차|car|jadongcha
+회사|company|hoesa
+사무실|office|samusil
+우체국|post office|ucheguk
+편의점|convenience store|pyeonuijeom
+영화관|movie theater|yeonghwagwan
+노래방|karaoke room|noraebang
+찜질방|Korean sauna|jjimjilbang
+미용실|hair salon|miyongsil
+백화점|department store|baekwajeom
+여행|travel, trip|yeohaeng
+지도|map|jido
+표|ticket|pyo
+여권|passport|yeogwon
+짐|luggage|jim
+입구|entrance|ipgu
+출구|exit|chulgu
+왼쪽|left|oenjjok
+오른쪽|right|oreunjjok
+앞|front|ap
+뒤|back, behind|dwi
+옆|side, next to|yeop
+위|up, above|wi
+아래|under, below|arae
+안|inside; not|an
+밖|outside|bak
+가운데|middle|gaunde
+근처|nearby|geuncheo
+시간|time, hour|sigan
+분|minute; counter for people (honorific)|bun
+초|second|cho
+날|day|nal
+하루|one day, a day|haru
+주|week|ju
+주말|weekend|jumal
+달|month, moon|dal
+해|year, sun|hae
+년|year (counter)|nyeon
+오늘|today|oneul
+내일|tomorrow|naeil
+어제|yesterday|eoje
+모레|day after tomorrow|more
+지금|now|jigeum
+나중에|later|najunge
+아까|a little while ago|akka
+요즘|these days|yojeum
+항상|always|hangsang
+자주|often|jaju
+가끔|sometimes|gakkeum
+전혀|not at all|jeonhyeo
+다시|again|dasi
+벌써|already|beolsseo
+아직|still, not yet|ajik
+곧|soon|got
+빨리|quickly|ppalli
+천천히|slowly|cheoncheonhi
+일찍|early|iljjik
+늦게|late|neutge
+먼저|first, ahead|meonjeo
+같이|together|gachi
+혼자|alone|honja
+아주|very|aju
+정말|really|jeongmal
+진짜|really, for real|jinjja
+너무|too, very|neomu
+조금|a little|jogeum
+많이|a lot|mani
+더|more|deo
+덜|less|deol
+제일|the most|jeil
+가장|the most|gajang
+잘|well|jal
+못|cannot|mot
+다|all|da
+모두|everyone, all|modu
+그리고|and|geurigo
+그래서|so, therefore|geuraeseo
+그런데|but, by the way|geureonde
+하지만|but, however|hajiman
+그러면|then, in that case|geureomyeon
+왜냐하면|because|waenyahamyeon
+아마|maybe, probably|ama
+꼭|surely, definitely|kkok
+특히|especially|teuki
+보통|usually, normal|botong
+갑자기|suddenly|gapjagi
+드디어|finally|deudieo
+월요일|Monday|woryoil
+화요일|Tuesday|hwayoil
+수요일|Wednesday|suyoil
+목요일|Thursday|mogyoil
+금요일|Friday|geumyoil
+토요일|Saturday|toyoil
+일요일|Sunday|iryoil
+봄|spring|bom
+여름|summer|yeoreum
+가을|autumn, fall|gaeul
+겨울|winter|gyeoul
+생일|birthday|saengil
+파티|party|pati
+휴가|vacation, leave|hyuga
+방학|school vacation|banghak
+명절|traditional holiday|myeongjeol
+설날|Lunar New Year|seollal
+추석|Korean harvest festival|chuseok
+하늘|sky|haneul
+별|star|byeol
+구름|cloud|gureum
+비|rain|bi
+바람|wind, wish|baram
+날씨|weather|nalssi
+불|fire, light|bul
+땅|ground, land|ttang
+산|mountain|san
+강|river|gang
+호수|lake|hosu
+숲|forest|sup
+나무|tree|namu
+꽃|flower|kkot
+풀|grass, glue|pul
+잎|leaf|ip
+돌|stone|dol
+섬|island|seom
+시골|countryside|sigol
+자연|nature|jayeon
+공기|air|gonggi
+동물|animal|dongmul
+개|dog; counter for things|gae
+강아지|puppy|gangaji
+고양이|cat|goyangi
+말|horse, words, speech|mal
+소|cow|so
+돼지|pig|dwaeji
+새|bird, new|sae
+물고기|fish (live)|mulgogi
+쥐|mouse, rat|jwi
+토끼|rabbit|tokki
+곰|bear|gom
+호랑이|tiger|horangi
+사자|lion|saja
+뱀|snake|baem
+원숭이|monkey|wonsungi
+코끼리|elephant|kokkiri
+닭|chicken (animal)|dak
+오리|duck|ori
+벌레|bug, insect|beolle
+나비|butterfly|nabi
+벌|bee, punishment|beol
+일|work, one, day; matter, thing to do|il
+직업|job, occupation|jigeop
+돈|money|don
+가격|price|gagyeok
+값|price, value|gap
+회의|meeting|hoeui
+문제|problem, question|munje
+질문|question|jilmun
+대답|answer|daedap
+생각|thought, idea|saenggak
+이유|reason|iyu
+사실|fact, actually|sasil
+거짓말|lie|geojinmal
+이름|name|ireum
+단어|word|daneo
+문장|sentence|munjang
+한국어|Korean language|hangugeo
+영어|English|yeongeo
+외국어|foreign language|oegugeo
+언어|language|eoneo
+글|writing, text|geul
+한글|Korean alphabet|hangeul
+이야기|story|iyagi
+뉴스|news|nyuseu
+신문|newspaper|sinmun
+잡지|magazine|japji
+영화|movie|yeonghwa
+드라마|TV drama|deurama
+음악|music|eumak
+노래|song|norae
+춤|dance|chum
+게임|game|geim
+운동|exercise, sports|undong
+축구|soccer|chukgu
+야구|baseball|yagu
+수업|class|sueop
+숙제|homework|sukje
+시험|exam|siheom
+교실|classroom|gyosil
+반|half, class|ban
+번호|number|beonho
+숫자|number, digit|sutja
+색|color|saek
+모양|shape|moyang
+크기|size|keugi
+처음|first time, beginning|cheoeum
+마지막|last, end|majimak
+끝|end|kkeut
+중간|middle|junggan
+방법|method, way|bangbeop
+경우|case|gyeongu
+것|thing|geot
+곳|place|got
+장소|place, venue|jangso
+나이|age|nai
+사랑|love|sarang
+기분|mood, feeling|gibun
+행복|happiness|haengbok
+꿈|dream|kkum
+희망|hope|huimang
+걱정|worry|geokjeong
+두려움|fear|duryeoum
+웃음|laughter|useum
+눈물|tears|nunmul
+선물|gift|seonmul
+도움|help|doum
+약속|promise, appointment|yaksok
+소리|sound|sori
+목소리|voice|moksori
+빛|light|bit
+그림|picture, painting|geurim
+건강|health|geongang
+병|illness, bottle; counter for bottles|byeong
+감기|cold (illness)|gamgi
+약|medicine|yak
+의미|meaning|uimi
+뜻|meaning, will|tteut
+경험|experience|gyeongheom
+기회|opportunity|gihoe
+미래|future|mirae
+과거|past|gwageo
+역사|history|yeoksa
+문화|culture|munhwa
+사회|society|sahoe
+정부|government|jeongbu
+법|law|beop
+전쟁|war|jeonjaeng
+평화|peace|pyeonghwa
+좋다|to be good|jota
+나쁘다|to be bad|nappeuda
+크다|to be big|keuda
+작다|to be small|jakda
+많다|to be many, to be a lot|manta
+적다|to be few|jeokda
+길다|to be long|gilda
+짧다|to be short|jjalda
+높다|to be high|nopda
+낮다|to be low|natda
+넓다|to be wide|neolda
+좁다|to be narrow|jopda
+멀다|to be far|meolda
+가깝다|to be near|gakkapda
+새롭다|to be new|saeropda
+오래되다|to be old (things)|oraedoeda
+젊다|to be young|jeomda
+늙다|to be old (people)|neukda
+예쁘다|to be pretty|yeppeuda
+아름답다|to be beautiful|areumdapda
+멋있다|to be cool, stylish|meositda
+귀엽다|to be cute|gwiyeopda
+잘생기다|to be handsome|jalsaenggida
+못생기다|to be ugly|motsaenggida
+쉽다|to be easy|swipda
+어렵다|to be difficult|eoryeopda
+재미있다|to be fun, interesting|jaemiitda
+재미없다|to be boring|jaemieopda
+맛있다|to be delicious|masitda
+맛없다|to taste bad|madeopda
+비싸다|to be expensive|bissada
+싸다|to be cheap|ssada
+덥다|to be hot (weather)|deopda
+춥다|to be cold (weather)|chupda
+따뜻하다|to be warm|ttatteutada
+시원하다|to be cool, refreshing|siwonhada
+뜨겁다|to be hot (to touch)|tteugeopda
+차갑다|to be cold (to touch)|chagapda
+바쁘다|to be busy|bappeuda
+한가하다|to be free, not busy|hangahada
+피곤하다|to be tired|pigonhada
+배고프다|to be hungry|baegopeuda
+배부르다|to be full|baebureuda
+목마르다|to be thirsty|mongmareuda
+아프다|to be sick, to hurt|apeuda
+건강하다|to be healthy|geonganghada
+행복하다|to be happy|haengbokada
+기쁘다|to be glad|gippeuda
+슬프다|to be sad|seulpeuda
+외롭다|to be lonely|oeropda
+무섭다|to be scary, to be scared|museopda
+부끄럽다|to be shy, embarrassed|bukkeureopda
+심심하다|to be bored|simsimhada
+조용하다|to be quiet|joyonghada
+시끄럽다|to be noisy|sikkeureopda
+깨끗하다|to be clean|kkaekkeutada
+더럽다|to be dirty|deoreopda
+빠르다|to be fast|ppareuda
+느리다|to be slow|neurida
+무겁다|to be heavy|mugeopda
+가볍다|to be light|gabyeopda
+강하다|to be strong|ganghada
+약하다|to be weak|yakada
+친절하다|to be kind|chinjeolhada
+착하다|to be good-natured|chakada
+똑똑하다|to be smart|ttokttokada
+중요하다|to be important|jungyohada
+필요없다|to be unnecessary|piryoeopda
+같다|to be the same|gatda
+다르다|to be different|dareuda
+맞다|to be correct|matda
+틀리다|to be wrong|teullida
+어둡다|to be dark|eodupda
+밝다|to be bright|bakda
+달다|to be sweet|dalda
+짜다|to be salty|jjada
+맵다|to be spicy|maepda
+시다|to be sour|sida
+편하다|to be comfortable|pyeonhada
+불편하다|to be uncomfortable|bulpyeonhada
+유명하다|to be famous|yumyeonghada
+위험하다|to be dangerous|wiheomhada
+안전하다|to be safe|anjeonhada
+괜찮다|to be okay|gwaenchanta
+충분하다|to be enough|chungbunhada
+특별하다|to be special|teukbyeolhada
+이상하다|to be strange|isanghada
+신기하다|to be amazing, novel|singihada
+궁금하다|to be curious|gunggeumhada
+졸리다|to be sleepy|jollida
+하얗다|to be white|hayata
+까맣다|to be black|kkamata
+빨갛다|to be red|ppalgata
+파랗다|to be blue|parata
+노랗다|to be yellow|norata
+초록색|green|choroksaek
+흰색|white|huinsaek
+검은색|black|geomeunsaek
+빨간색|red|ppalgansaek
+파란색|blue|paransaek
+노란색|yellow|noransaek
+회색|gray|hoesaek
+갈색|brown|galsaek
+분홍색|pink|bunhongsaek
+보라색|purple|borasaek
+주황색|orange (color)|juhwangsaek
+하나|one (native)|hana
+둘|two (native)|dul
+셋|three (native)|set
+넷|four (native)|net
+다섯|five (native)|daseot
+여섯|six (native)|yeoseot
+일곱|seven (native)|ilgop
+여덟|eight (native)|yeodeol
+아홉|nine (native)|ahop
+열|ten (native), fever|yeol
+스물|twenty (native)|seumul
+삼|three (Sino)|sam
+사|four (Sino)|sa
+오|five (Sino)|o
+육|six (Sino)|yuk
+칠|seven (Sino)|chil
+구|nine (Sino)|gu
+십|ten (Sino)|sip
+백|hundred|baek
+천|thousand|cheon
+만|ten thousand|man
+억|hundred million|eok
+영|zero|yeong
+공|zero, ball|gong
+명|counter for people|myeong
+마리|counter for animals|mari
+권|counter for books|gwon
+잔|counter for cups, glass|jan
+장|counter for flat things|jang
+살|years old (age), flesh|sal
+번|times, number|beon
+월|month|wol
+일월|January|irwol
+이월|February|iwol
+삼월|March|samwol
+사월|April|sawol
+오월|May|owol
+유월|June|yuwol
+칠월|July|chirwol
+팔월|August|parwol
+구월|September|guwol
+시월|October|siwol
+십일월|November|sibirwol
+십이월|December|sibiwol
+첫째|first|cheotjjae
+둘째|second|duljjae
+셋째|third|setjjae
+날짜|date|naljja
+요일|day of the week|yoil
+오전|a.m., morning|ojeon
+오후|p.m., afternoon|ohu
+밤|night, chestnut|bam
+새벽|dawn|saebyeok
+낮|daytime|nat
+매일|every day|maeil
+매주|every week|maeju
+매년|every year|maenyeon
+작년|last year|jangnyeon
+올해|this year|olhae
+내년|next year|naenyeon
+지난주|last week|jinanju
+이번 주|this week|ibeon ju
+다음 주|next week|daeum ju
+다음|next|daeum
+이번|this time|ibeon
+지난|last, past|jinan
+전|before|jeon
+후|after|hu
+동안|during, for|dongan
+때|time, when|ttae
+계획|plan|gyehoek
+목표|goal|mokpyo
+준비|preparation|junbi
+연습|practice|yeonseup
+공부|study|gongbu
+일기|diary|ilgi
+메시지|message|mesiji
+이메일|email|imeil
+인터넷|internet|inteonet
+비밀번호|password|bimilbeonho
+앱|app|aep
+화면|screen|hwamyeon
+파일|file|pail
+카메라|camera|kamera
+충전기|charger|chungjeongi
+배터리|battery|baeteori
+월급|monthly salary|wolgeup
+카드|card|kadeu
+현금|cash|hyeongeum
+영수증|receipt|yeongsujeung
+할인|discount|harin
+쇼핑|shopping|syoping
+물건|thing, item|mulgeon
+선택|choice|seontaek
+주문|order|jumun
+메뉴|menu|menyu
+계산|calculation, paying the bill|gyesan
+예약|reservation|yeyak
+자리|seat, spot|jari
+교통|traffic, transportation|gyotong
+신호등|traffic light|sinhodeung
+횡단보도|crosswalk|hoengdanbodo
+사고|accident|sago
+주차장|parking lot|juchajang
+주유소|gas station|juyuso
+정류장|bus stop|jeongnyujang
+고속도로|highway|gosokdoro
+골목|alley|golmok
+엘리베이터|elevator|ellibeiteo
+아파트|apartment|apateu
+층|floor, level|cheung
+이사|moving (house)|isa
+주소|address|juso
+고향|hometown|gohyang
+외국|foreign country|oeguk
+외국인|foreigner|oegugin
+한국 사람|Korean person|hanguk saram
+미국|USA|miguk
+일본|Japan|ilbon
+중국|China|jungguk
+영국|UK|yeongguk
+프랑스|France|peurangseu
+독일|Germany|dogil
+비자|visa|bija
+환전|currency exchange|hwanjeon
+관광|sightseeing|gwangwang
+관광객|tourist|gwangwanggaek
+기념품|souvenir|ginyeompum
+풍경|scenery|punggyeong
+경치|view, scenery|gyeongchi
+태풍|typhoon|taepung
+눈사람|snowman|nunsaram
+무지개|rainbow|mujigae
+번개|lightning|beongae
+천둥|thunder|cheondung
+안개|fog|angae
+얼음|ice|eoreum
+온도|temperature|ondo
+계절|season|gyejeol
+환경|environment|hwangyeong
+쓰레기|trash|sseuregi
+재활용|recycling|jaehwaryong
+에너지|energy|eneoji
+과학|science|gwahak
+수학|math|suhak
+미술|art (subject)|misul
+체육|physical education|cheyuk
+과목|school subject|gwamok
+대학생|college student|daehaksaeng
+졸업|graduation|joreop
+입학|school admission|ipak
+교과서|textbook|gyogwaseo
+사전|dictionary|sajeon
+칠판|blackboard|chilpan
+지우개|eraser|jiugae
+가위|scissors|gawi
+의견|opinion|uigyeon
+설명|explanation|seolmyeong
+대화|conversation|daehwa
+소식|news (personal)|sosik
+전화번호|phone number|jeonhwabeonho
+마음에 들다|to like, to be pleasing|maeume deulda
+배가 고프다|to be hungry|baega gopeuda
+기분이 좋다|to feel good|gibuni jota
+시간이 없다|to have no time|sigani eopda
+괜찮아|it's okay (casual)|gwaenchana
+알겠어요|I understand, got it|algesseoyo
+몰라요|I don't know|mollayo
+좋아요|good, I like it|joayo
+싫어요|I don't like it, no|sireoyo
+배고파요|I'm hungry|baegopayo
+보고 싶어요|I miss you|bogo sipeoyo
+사랑해요|I love you|saranghaeyo
+진심|sincerity, true heart|jinsim
+대박|awesome, jackpot|daebak
+아이고|oh my, ugh|aigo
+어머|oh my (surprise)|eomeo
+그래요|is that so, okay|geuraeyo
+정말요|really?|jeongmallyo
+물론이죠|of course|mullonijyo
+천만에요|you're welcome|cheonmaneyo
+어서 오세요|welcome (in a shop)|eoseo oseyo
+얼마예요|how much is it?|eolmayeyo
+주세요|please give me|juseyo
+도와주세요|please help me|dowajuseyo
+처음 뵙겠습니다|nice to meet you (formal)|cheoeum boepgetseumnida
+수고하셨습니다|thank you for your hard work|sugohasyeotseumnida
+오랜만이에요|long time no see|oraenmanieyo
+생일 축하해요|happy birthday|saengil chukahaeyo
+새해 복 많이 받으세요|happy new year|saehae bok mani badeuseyo
+조심하세요|be careful|josimhaseyo
+다녀오겠습니다|I'm off (leaving home)|danyeoogetseumnida
+다녀왔습니다|I'm back (returning home)|danyeowatseumnida
+웃기다|to be funny|utgida
+귀찮다|to be bothersome|gwichanta
+부럽다|to be envious|bureopda
+그립다|to miss, to long for|geuripda
+반갑다|to be glad to see|bangapda
+아깝다|to be a waste, a pity|akkapda
+답답하다|to be frustrated, stuffy|dapdapada
+설레다|to be excited, fluttering|seolleda
+속상하다|to be upset|soksanghada
+감동하다|to be moved|gamdonghada
+후회하다|to regret|huhoehada
+미워하다|to hate|miwohada
+그만두다|to quit|geumanduda
+참다|to endure, to hold back|chamda
+싸우다|to fight|ssauda
+화해하다|to make up|hwahaehada
+헤어지다|to break up, to part|heeojida
+사귀다|to date, to go out with|sagwida
+소개하다|to introduce|sogaehada
+초대하다|to invite|chodaehada
+방문하다|to visit|bangmunhada
+구경하다|to look around, to sightsee|gugyeonghada
+산책하다|to take a walk|sanchaekada
+등산하다|to go hiking|deungsanhada
+수영하다|to swim|suyeonghada
+쇼핑하다|to go shopping|syopinghada
+주문하다|to order|jumunhada
+계산하다|to pay, to calculate|gyesanhada
+예약하다|to make a reservation|yeyakada
+취소하다|to cancel|chwisohada
+확인하다|to check, to confirm|hwaginhada
+설명하다|to explain|seolmyeonghada
+번역하다|to translate|beonyeokada
+복습하다|to review (lessons)|bokseupada
+예습하다|to prepare (lessons)|yeseupada
+졸업하다|to graduate|joreopada
+입원하다|to be hospitalized|ibwonhada
+퇴근하다|to leave work|toegeunhada
+출근하다|to go to work|chulgeunhada
+이사하다|to move (house)|isahada
+늦다|to be late|neutda
+서두르다|to hurry|seodureuda
+지나다|to pass by|jinada
+건너다|to cross|geonneoda
+올라가다|to go up|ollagada
+내려가다|to go down|naeryeogada
+떠나다|to leave|tteonada
+보여주다|to show|boyeojuda
+가져오다|to bring|gajyeooda
+가져가다|to take (away)|gajyeogada
+빌려주다|to lend|billyeojuda
+신다|to wear (shoes)|sinda
+끼다|to wear (gloves, rings)|kkida
+매다|to tie, to wear (a tie)|maeda
+감다|to close (eyes), to wash (hair)|gamda
+샤워하다|to shower|syawohada
+세수하다|to wash one's face|sesuhada
+양치하다|to brush teeth|yangchihada
+화장하다|to put on makeup|hwajanghada
+세상|the world|sesang
+인생|life|insaeng
+삶|life, living|sam
+시작|start|sijak
+결과|result|gyeolgwa
+성공|success|seonggong
+실수|mistake|silsu
+노력|effort|noryeok
+습관|habit|seupgwan
+취미|hobby|chwimi
+관심|interest|gwansim
+성격|personality|seonggyeok
+얘기|story, talk (casual)|yaegi
+농담|joke|nongdam
+비밀|secret|bimil
+향수|perfume|hyangsu
+화장품|cosmetics|hwajangpum
+머리카락|hair (strands)|meorikarak
+수염|beard|suyeom
+배꼽|belly button|baekkop
+허리|waist, lower back|heori
+엉덩이|buttocks|eongdeongi
+발가락|toe|balgarak
+손톱|fingernail|sontop
+이마|forehead|ima
+입술|lips|ipsul
+혀|tongue|hyeo
+뼈|bone|ppyeo
+감자튀김|french fries|gamjatwigim
+떡|rice cake|tteok
+떡볶이|spicy rice cakes|tteokbokki
+비빔밥|mixed rice bowl|bibimbap
+불고기|marinated grilled beef|bulgogi
+김밥|seaweed rice roll|gimbap
+치킨|fried chicken|chikin
+피자|pizza|pija
+햄버거|hamburger|haembeogeo
+초콜릿|chocolate|chokollit
+사탕|candy|satang
+물병|water bottle|mulbyeong
+냄비|pot|naembi
+프라이팬|frying pan|peuraipaen
+전자레인지|microwave|jeonjareinji
+청소기|vacuum cleaner|cheongsogi
+쓰레기통|trash can|sseuregitong
+휴지|tissue, toilet paper|hyuji
+칫솔|toothbrush|chitsol
+치약|toothpaste|chiyak
+샴푸|shampoo|syampu
+</script>
+<script>
+(function(){
+"use strict";
+var CFG={"id": "ko", "from": "KO", "to": "EN", "kind": "ko"};
+var W=[];(document.getElementById("data").textContent||"").split("\n").forEach(function(l){l=l.trim();if(!l)return;var p=l.split("|");if(p.length>=2&&p[0]&&p[1])W.push(p)});
+if(!W.length)return;
+var KEY="notomantra-flash-"+CFG.id;
+var mem={};
+function load(){try{var s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return mem[KEY]||null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){mem[KEY]=st}}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function freshDeck(){var k={};st.known.forEach(function(i){k[i]=1});var d=[];for(var i=0;i<W.length;i++)if(!k[i])d.push(i);return shuffle(d)}
+var st=load();
+if(!st||!Array.isArray(st.known)||!Array.isArray(st.deck)||st.n!==W.length){st={n:W.length,known:[],deck:[],dir:0,open:false}}
+if(!st.deck.length)st.deck=freshDeck();
+var $=function(id){return document.getElementById(id)};
+var card=$("card"),front=$("front"),back=$("back"),menu=$("menu");
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function render(){
+  $("dir").textContent=st.dir?CFG.to+" → "+CFG.from:CFG.from+" → "+CFG.to;
+  var known=st.known.length,total=W.length;
+  $("barfill").style.width=(known/total*100).toFixed(1)+"%";
+  $("count").textContent=known.toLocaleString("en-US")+" / "+total.toLocaleString("en-US")+" known";
+  card.classList.toggle("open",!!st.open);
+  if(!st.deck.length){
+    front.className="front en";front.innerHTML='<span class="done">All '+total.toLocaleString("en-US")+' marked as known.</span>';
+    back.innerHTML='<div class="sub">Tap … then Reset progress to go again.</div>';card.classList.add("open");return;
+  }
+  var w=W[st.deck[0]];
+  var f=CFG.kind;
+  if(!st.dir){
+    front.className="front"+(f==="kanji"?" big":"");
+    front.textContent=w[0];
+    back.innerHTML='<div class="meaning">'+esc(w[1])+'</div>'+extra(w);
+  }else{
+    front.className="front en";
+    front.textContent=w[1];
+    back.innerHTML='<div class="meaning native">'+esc(w[0])+'</div>'+extra(w);
+  }
+}
+function extra(w){
+  if(CFG.kind==="kanji"){
+    var h="";
+    if(w[2])h+='<div class="sub"><b>ON</b>'+esc(w[2])+'</div>';
+    if(w[3])h+='<div class="sub"><b>KUN</b>'+esc(w[3])+'</div>';
+    if(w[4])h+='<div><span class="pill">JLPT '+esc(w[4])+'</span></div>';
+    return h;
+  }
+  if(CFG.kind==="ko"&&w[2])return '<div class="sub">'+esc(w[2])+'</div>';
+  return "";
+}
+function flip(){if(menu.classList.contains("show"))return;if(!st.deck.length)return;st.open=!st.open;save();render()}
+function next(known){
+  if(!st.deck.length)return;
+  var i=st.deck.shift();
+  if(known){if(st.known.indexOf(i)<0)st.known.push(i)}
+  else{var pos=Math.min(st.deck.length,8+Math.floor(Math.random()*12));st.deck.splice(pos,0,i)}
+  st.open=false;save();render();
+}
+card.addEventListener("click",function(e){if(menu.contains(e.target))return;flip()});
+card.addEventListener("keydown",function(e){if(e.target!==card)return;if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}});
+document.addEventListener("keydown",function(e){if(menu.classList.contains("show"))return;if(e.key==="ArrowRight")next(false);if(e.key==="ArrowUp")next(true)});
+$("again").addEventListener("click",function(){next(false)});
+$("know").addEventListener("click",function(){next(true)});
+$("dir").addEventListener("click",function(){st.dir=st.dir?0:1;st.open=false;save();render()});
+$("more").addEventListener("click",function(e){e.stopPropagation();
+  $("menuinfo").textContent=st.known.length+" known, "+st.deck.length+" still in rotation. Known words are skipped until you reset.";
+  menu.classList.toggle("show")});
+$("close").addEventListener("click",function(e){e.stopPropagation();menu.classList.remove("show")});
+$("reset").addEventListener("click",function(e){e.stopPropagation();st={n:W.length,known:[],deck:[],dir:st.dir,open:false};st.deck=freshDeck();save();menu.classList.remove("show");render()});
+render();
+})();
+</script>
+</body>
+</html>

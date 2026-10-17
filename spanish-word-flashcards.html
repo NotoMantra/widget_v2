@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spanish Flashcards</title>
+<style>
+:root{
+  --bg:#f7f0e3;
+  --card:#fbf6ec;
+  --line:#dcc6a3;
+  --line-soft:#e9dbc2;
+  --ink:#8c6c45;
+  --ink-soft:#ae936f;
+  --ink-faint:#c7b291;
+  --good:#9aa57a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Apple SD Gothic Neo","Malgun Gothic","Hiragino Sans","Yu Gothic","Noto Sans CJK JP","Noto Sans KR",sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+.wrap{container-type:inline-size;height:100%;min-height:210px;padding:4px}
+.w{height:100%;display:flex;flex-direction:column;gap:10px;background:var(--bg);border:3px solid var(--line);border-radius:20px;padding:14px 14px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;gap:6px;flex-shrink:0}
+button{font:inherit;color:var(--ink);background:transparent;border:2px solid var(--line);border-radius:999px;cursor:pointer;transition:background .15s,border-color .15s,transform .1s;-webkit-tap-highlight-color:transparent}
+button:hover{background:var(--card);border-color:var(--ink-faint)}
+button:active{transform:scale(.96)}
+button:focus-visible{outline:2px solid var(--ink-soft);outline-offset:2px}
+.chip{font-size:11px;font-weight:600;padding:4px 10px;letter-spacing:.04em}
+.icon{width:28px;height:28px;display:grid;place-items:center;padding:0}
+.icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card{flex:1;min-height:110px;position:relative;container-type:size;background:var(--card);border:2px solid var(--line-soft);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px 12px;cursor:pointer;user-select:none;overflow:hidden}
+.front{font-family:"Iowan Old Style","Palatino Linotype",Georgia,"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP","Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:clamp(20px,min(9cqi,17cqh),44px);line-height:1.15;font-weight:500;color:var(--ink);word-break:keep-all;overflow-wrap:anywhere}
+.front.big{font-size:clamp(36px,min(22cqi,30cqh),88px);line-height:1}
+.front.en{font-family:inherit;font-size:clamp(16px,min(6.5cqi,13cqh),30px);font-weight:600}
+.back{gap:2px;margin-top:min(10px,3cqh);display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s}
+.card.open .back{opacity:1;transform:none}
+.meaning{font-size:clamp(13px,min(4.6cqi,9cqh),19px);font-weight:600;color:var(--ink)}
+.meaning.native{font-family:"Iowan Old Style",Georgia,"Hiragino Mincho ProN","Yu Mincho","Apple SD Gothic Neo","Malgun Gothic",serif;font-size:clamp(18px,min(8cqi,15cqh),36px);font-weight:500}
+.sub{font-size:12px;color:var(--ink-soft);line-height:1.5}
+.sub b{font-weight:600;color:var(--ink-soft);letter-spacing:.04em;margin-right:3px}
+.hint{position:absolute;bottom:8px;left:0;right:0;font-size:11px;color:var(--ink-faint);transition:opacity .2s}
+.card.open .hint{opacity:0}
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;border:1.5px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink-soft)}
+.actions{display:flex;gap:8px}
+.actions button{flex:1;padding:9px 6px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+.actions .know{background:var(--card)}
+.actions svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.prog{display:flex;align-items:center;gap:8px}
+.bar{flex:1;height:6px;border-radius:99px;background:var(--line-soft);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ink-faint);border-radius:99px;transition:width .3s}
+.count{font-size:11px;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+.menu{position:absolute;inset:0;background:var(--bg);border-radius:12px;padding:14px;display:none;flex-direction:column;gap:10px;justify-content:center;cursor:default;text-align:left;z-index:2}
+.menu.show{display:flex}
+.menu h4{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.menu p{font-size:12px;color:var(--ink-soft);line-height:1.5}
+.menu .row{display:flex;gap:8px;flex-wrap:wrap}
+.menu .row button{font-size:12px;font-weight:600;padding:6px 12px}
+.menu .credit{font-size:10px;color:var(--ink-faint)}
+.done{font-size:15px;font-weight:600}
+/* compact: narrow columns */
+@container (max-width:300px){
+  .w{padding:10px;gap:8px;border-radius:16px}
+  .tag{font-size:10px}
+  .wc{display:none}
+  .chip{padding:3px 8px;font-size:10px}
+  .actions button span{display:none}
+  .actions button{padding:8px 4px}
+  .hint{display:none}
+  .sub{font-size:11px}
+}
+@container (max-width:200px){
+  .count{display:none}
+  .tools .icon{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="w" id="app">
+  <div class="top">
+    <div class="tag" id="tag">Spanish<span class="wc"> · 1,016 words</span></div>
+    <div class="tools">
+      <button class="chip" id="dir" title="Switch direction" aria-label="Switch direction"></button>
+      <button class="icon" id="more" title="Options" aria-label="Options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+    </div>
+  </div>
+  <div class="card" id="card" role="button" tabindex="0" aria-label="Flashcard, tap to reveal">
+    <div class="front" id="front"></div>
+    <div class="back" id="back"></div>
+    <div class="hint" id="hint">tap to reveal</div>
+    <div class="menu" id="menu">
+      <h4>Options</h4>
+      <p id="menuinfo"></p>
+      <div class="row">
+        <button id="reset">Reset progress</button>
+        <button id="close">Close</button>
+      </div>
+      <p class="credit">Saved only in this browser. Nothing is sent anywhere.</p>
+    </div>
+  </div>
+  <div class="actions">
+    <button id="again" aria-label="Show again later"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><span>Again</span></button>
+    <button id="know" class="know" aria-label="I know this"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span>Know it</span></button>
+  </div>
+  <div class="prog"><div class="bar"><i id="barfill"></i></div><div class="count" id="count"></div></div>
+</div>
+</div>
+<script type="text/plain" id="data">
+el|the (masc.)
+la|the (fem.)
+de|of, from
+que|that, which
+y|and
+en|in, on
+un|a, an (masc.)
+una|a, an (fem.)
+ser|to be (permanent)
+estar|to be (temporary, location)
+no|no, not
+haber|to have (auxiliary), there is
+por|for, by, through
+con|with
+su|his, her, their, your
+para|for, in order to
+como|like, as
+tener|to have
+lo|it, him
+pero|but
+más|more
+hacer|to do, to make
+poder|to be able to, can
+decir|to say, to tell
+este|this (masc.)
+ir|to go
+otro|other, another
+ese|that (masc.)
+si|if
+me|me, myself
+ya|already
+ver|to see
+porque|because
+dar|to give
+cuando|when
+muy|very
+sin|without
+vez|time, occasion
+mucho|a lot, much
+saber|to know (facts)
+qué|what
+sobre|on, about
+mi|my
+alguno|some, any
+mismo|same
+yo|I
+también|also, too
+hasta|until, even
+año|year (el año)
+dos|two
+querer|to want, to love
+entre|between, among
+así|like this, so
+primero|first
+desde|since, from
+grande|big, great
+eso|that (neuter)
+ni|neither, nor
+nos|us, ourselves
+llegar|to arrive
+pasar|to pass, to happen
+tiempo|time, weather (el tiempo)
+ella|she
+sí|yes
+día|day (el día)
+uno|one
+bien|well, fine
+poco|little, few
+deber|must, to owe
+entonces|then, so
+poner|to put
+cosa|thing (la cosa)
+tanto|so much
+hombre|man (el hombre)
+parecer|to seem
+nuestro|our
+tan|so, as
+donde|where
+ahora|now
+parte|part (la parte)
+después|after, later
+vida|life (la vida)
+quedar|to stay, to remain
+siempre|always
+creer|to believe, to think
+hablar|to speak, to talk
+llevar|to carry, to wear
+dejar|to leave, to let
+nada|nothing
+cada|each, every
+seguir|to follow, to continue
+menos|less, fewer
+nuevo|new
+encontrar|to find
+algo|something
+solo|only, alone
+pues|well, then
+llamar|to call
+venir|to come
+pensar|to think
+salir|to go out, to leave
+volver|to return, to come back
+tomar|to take, to drink
+conocer|to know (people, places)
+vivir|to live
+sentir|to feel
+tratar|to try, to treat
+mirar|to look at, to watch
+contar|to count, to tell
+empezar|to begin, to start
+esperar|to wait, to hope
+buscar|to look for
+existir|to exist
+entrar|to enter, to go in
+trabajar|to work
+escribir|to write
+perder|to lose
+producir|to produce
+ocurrir|to happen, to occur
+entender|to understand
+pedir|to ask for, to order
+recibir|to receive
+recordar|to remember
+terminar|to finish, to end
+permitir|to allow
+aparecer|to appear
+conseguir|to get, to achieve
+comenzar|to begin
+servir|to serve
+sacar|to take out
+necesitar|to need
+mantener|to keep, to maintain
+resultar|to turn out
+leer|to read
+caer|to fall
+cambiar|to change
+presentar|to present, to introduce
+crear|to create
+abrir|to open
+considerar|to consider
+oír|to hear
+acabar|to finish, to end
+convertir|to convert, to turn into
+ganar|to win, to earn
+formar|to form
+traer|to bring
+partir|to leave, to split
+morir|to die
+aceptar|to accept
+realizar|to carry out
+suponer|to suppose
+comprender|to understand
+lograr|to achieve, to manage
+explicar|to explain
+preguntar|to ask
+tocar|to touch, to play (music)
+reconocer|to recognize
+estudiar|to study
+alcanzar|to reach
+nacer|to be born
+dirigir|to direct, to manage
+correr|to run
+utilizar|to use
+pagar|to pay
+ayudar|to help
+gustar|to like, to please
+jugar|to play
+escuchar|to listen
+cumplir|to fulfill, to turn (age)
+ofrecer|to offer
+descubrir|to discover
+levantar|to lift, to raise
+intentar|to try
+usar|to use
+decidir|to decide
+repetir|to repeat
+olvidar|to forget
+valer|to be worth, to cost
+comer|to eat
+mostrar|to show
+ocupar|to occupy
+mover|to move
+continuar|to continue
+subir|to go up, to climb
+bajar|to go down
+dormir|to sleep
+beber|to drink
+comprar|to buy
+vender|to sell
+cerrar|to close
+enseñar|to teach, to show
+aprender|to learn
+viajar|to travel
+caminar|to walk
+cocinar|to cook
+limpiar|to clean
+lavar|to wash
+cantar|to sing
+bailar|to dance
+nadar|to swim
+manejar|to drive, to handle
+conducir|to drive
+pintar|to paint
+dibujar|to draw
+llorar|to cry
+reír|to laugh
+sonreír|to smile
+gritar|to shout
+odiar|to hate
+amar|to love
+besar|to kiss
+abrazar|to hug
+casarse|to get married
+despertar|to wake up
+levantarse|to get up
+acostarse|to go to bed
+ducharse|to take a shower
+vestirse|to get dressed
+sentarse|to sit down
+preparar|to prepare
+desayunar|to have breakfast
+almorzar|to have lunch
+cenar|to have dinner
+probar|to try, to taste
+elegir|to choose
+enviar|to send
+mandar|to send, to order
+contestar|to answer
+responder|to respond
+llenar|to fill
+romper|to break
+arreglar|to fix
+construir|to build
+destruir|to destroy
+guardar|to keep, to save
+quitar|to remove
+añadir|to add
+mejorar|to improve
+crecer|to grow
+cuidar|to take care of
+preocuparse|to worry
+quejarse|to complain
+equivocarse|to make a mistake
+divertirse|to have fun
+aburrirse|to get bored
+cansarse|to get tired
+enojarse|to get angry
+alegrarse|to be glad
+soñar|to dream
+imaginar|to imagine
+prometer|to promise
+mentir|to lie
+robar|to steal
+matar|to kill
+salvar|to save, to rescue
+proteger|to protect
+luchar|to fight
+ganarse|to earn (a living)
+gastar|to spend
+ahorrar|to save (money)
+prestar|to lend
+devolver|to give back
+alquilar|to rent
+la mujer|woman
+el niño|boy, child
+la niña|girl
+el padre|father
+la madre|mother
+los padres|parents
+el hijo|son
+la hija|daughter
+el hermano|brother
+la hermana|sister
+el abuelo|grandfather
+la abuela|grandmother
+el tío|uncle
+la tía|aunt
+el primo|cousin (male)
+la prima|cousin (female)
+el esposo|husband
+la esposa|wife
+el novio|boyfriend, groom
+la novia|girlfriend, bride
+el amigo|friend (male)
+la amiga|friend (female)
+la familia|family
+el bebé|baby
+la gente|people
+la persona|person
+el señor|sir, Mr., gentleman
+la señora|madam, Mrs., lady
+el vecino|neighbor
+el jefe|boss
+el compañero|classmate, coworker
+el profesor|teacher, professor
+el estudiante|student
+el médico|doctor
+el enfermero|nurse
+el abogado|lawyer
+el policía|police officer
+el cocinero|cook, chef
+el camarero|waiter
+el escritor|writer
+el artista|artist
+el cantante|singer
+el rey|king
+la reina|queen
+el cuerpo|body
+la cabeza|head
+la cara|face
+el ojo|eye
+la oreja|ear
+la nariz|nose
+la boca|mouth
+el diente|tooth
+el pelo|hair
+el cuello|neck
+el hombro|shoulder
+el brazo|arm
+la mano|hand
+el dedo|finger
+la pierna|leg
+el pie|foot
+la rodilla|knee
+la espalda|back
+el estómago|stomach
+el corazón|heart
+la sangre|blood
+la piel|skin
+la casa|house, home
+el hogar|home
+el apartamento|apartment
+la habitación|room, bedroom
+el cuarto|room
+la cocina|kitchen
+el baño|bathroom
+la sala|living room
+el jardín|garden
+la puerta|door
+la ventana|window
+la pared|wall
+el suelo|floor, ground
+el techo|ceiling, roof
+la escalera|stairs, ladder
+la mesa|table
+la silla|chair
+la cama|bed
+el sofá|sofa
+el espejo|mirror
+la lámpara|lamp
+la llave|key
+el reloj|clock, watch
+el teléfono|telephone
+el ordenador|computer (Spain)
+la computadora|computer (Latin America)
+la televisión|television
+la radio|radio
+el libro|book
+el cuaderno|notebook
+el lápiz|pencil
+el bolígrafo|pen
+el papel|paper
+la carta|letter
+la foto|photo
+la caja|box
+la bolsa|bag
+la ropa|clothes
+la camisa|shirt
+la camiseta|t-shirt
+los pantalones|pants, trousers
+la falda|skirt
+el vestido|dress
+el zapato|shoe
+el abrigo|coat
+el sombrero|hat
+la comida|food, meal
+el agua|water
+el pan|bread
+la leche|milk
+el huevo|egg
+el queso|cheese
+la carne|meat
+el pollo|chicken
+el pescado|fish (food)
+el arroz|rice
+la sopa|soup
+la ensalada|salad
+la fruta|fruit
+la manzana|apple
+la naranja|orange
+el plátano|banana
+la fresa|strawberry
+la verdura|vegetable
+la papa|potato (Latin America)
+la patata|potato (Spain)
+el tomate|tomato
+la cebolla|onion
+el ajo|garlic
+la sal|salt
+el azúcar|sugar
+el café|coffee, café
+el té|tea
+el jugo|juice (Latin America)
+el zumo|juice (Spain)
+el vino|wine
+la cerveza|beer
+el postre|dessert
+el desayuno|breakfast
+el almuerzo|lunch
+la cena|dinner
+el plato|plate, dish
+el vaso|glass (for drinking)
+la taza|cup, mug
+el cuchillo|knife
+el tenedor|fork
+la cuchara|spoon
+la ciudad|city
+el pueblo|town, village
+el país|country
+el mundo|world
+la calle|street
+la plaza|square, plaza
+el barrio|neighborhood
+el edificio|building
+la tienda|store, shop
+el mercado|market
+el supermercado|supermarket
+el restaurante|restaurant
+el hotel|hotel
+el banco|bank, bench
+el hospital|hospital
+la escuela|school
+la universidad|university
+la iglesia|church
+el museo|museum
+la biblioteca|library
+el parque|park
+la playa|beach
+el aeropuerto|airport
+la estación|station, season
+el puente|bridge
+la oficina|office
+la fábrica|factory
+el coche|car (Spain)
+el carro|car (Latin America)
+el autobús|bus
+el tren|train
+el avión|airplane
+el barco|ship, boat
+la bicicleta|bicycle
+el taxi|taxi
+el camino|path, way
+el viaje|trip, journey
+el billete|ticket (Spain), bill (money)
+el boleto|ticket (Latin America)
+el mapa|map
+la maleta|suitcase
+la hora|hour, time
+el minuto|minute
+el segundo|second
+la semana|week
+el mes|month
+la mañana|morning
+la tarde|afternoon, evening
+la noche|night
+hoy|today
+mañana|tomorrow
+ayer|yesterday
+el fin de semana|weekend
+el lunes|Monday
+el martes|Tuesday
+el miércoles|Wednesday
+el jueves|Thursday
+el viernes|Friday
+el sábado|Saturday
+el domingo|Sunday
+enero|January
+febrero|February
+marzo|March
+abril|April
+mayo|May
+junio|June
+julio|July
+agosto|August
+septiembre|September
+octubre|October
+noviembre|November
+diciembre|December
+la primavera|spring
+el verano|summer
+el otoño|autumn, fall
+el invierno|winter
+el cumpleaños|birthday
+la fiesta|party
+las vacaciones|vacation, holidays
+el sol|sun
+la luna|moon
+la estrella|star
+el cielo|sky
+la nube|cloud
+la lluvia|rain
+la nieve|snow
+el viento|wind
+el aire|air
+el fuego|fire
+la tierra|earth, land
+el mar|sea
+el río|river
+el lago|lake
+la montaña|mountain
+el bosque|forest
+el árbol|tree
+la flor|flower
+la planta|plant
+la hoja|leaf, sheet
+la piedra|stone
+la arena|sand
+la isla|island
+el campo|countryside, field
+el animal|animal
+el perro|dog
+el gato|cat
+el caballo|horse
+la vaca|cow
+el cerdo|pig
+la oveja|sheep
+el pájaro|bird
+el pez|fish (live)
+el ratón|mouse
+el conejo|rabbit
+el oso|bear
+el león|lion
+la serpiente|snake
+el insecto|insect
+la mariposa|butterfly
+el trabajo|work, job
+el dinero|money
+el precio|price
+la cuenta|bill, account
+la empresa|company
+el negocio|business
+la reunión|meeting
+el problema|problem
+la pregunta|question
+la respuesta|answer
+la idea|idea
+la razón|reason
+la verdad|truth
+la mentira|lie
+el nombre|name
+la palabra|word
+la frase|sentence, phrase
+el idioma|language
+la lengua|tongue, language
+la historia|history, story
+el cuento|short story, tale
+la noticia|news item
+el periódico|newspaper
+la revista|magazine
+la película|movie
+la música|music
+la canción|song
+el juego|game
+el deporte|sport
+el fútbol|soccer, football
+el equipo|team, equipment
+la clase|class
+la lección|lesson
+el examen|exam
+la tarea|homework, task
+la nota|grade, note
+el ejemplo|example
+el número|number
+la letra|letter (of alphabet), lyrics
+el color|color
+la forma|shape, way
+el tamaño|size
+el lado|side
+el centro|center, downtown
+el final|end
+el principio|beginning, principle
+la mitad|half
+el resto|rest, remainder
+la manera|way, manner
+el modo|way, mode
+el momento|moment
+el lugar|place
+el sitio|place, site
+el asunto|matter, issue
+el caso|case
+el hecho|fact
+la situación|situation
+el cambio|change
+el sistema|system
+el gobierno|government
+la ley|law
+la guerra|war
+la paz|peace
+la política|politics, policy
+la sociedad|society
+la cultura|culture
+el arte|art
+la ciencia|science
+la salud|health
+la enfermedad|illness, disease
+el dolor|pain
+la medicina|medicine
+la muerte|death
+el amor|love
+el miedo|fear
+la alegría|joy
+la tristeza|sadness
+la esperanza|hope
+el sueño|dream, sleepiness
+la suerte|luck
+el éxito|success
+el error|mistake
+la ayuda|help
+el favor|favor
+el regalo|gift
+la sorpresa|surprise
+la voz|voice
+el ruido|noise
+el sonido|sound
+la luz|light
+la sombra|shadow, shade
+el calor|heat
+el frío|cold
+la gana|desire, wish
+la necesidad|need
+la libertad|freedom
+la fuerza|strength, force
+el poder|power
+la mente|mind
+el alma|soul
+el pensamiento|thought
+la memoria|memory
+la experiencia|experience
+la oportunidad|opportunity
+el futuro|future
+el pasado|past
+el presente|present
+el siglo|century
+la edad|age
+la época|era, time period
+bueno|good
+malo|bad
+pequeño|small
+alto|tall, high
+bajo|short, low
+largo|long
+corto|short (length)
+ancho|wide
+gordo|fat
+delgado|thin
+joven|young
+viejo|old
+mayor|older, bigger
+menor|younger, smaller
+bonito|pretty
+hermoso|beautiful
+guapo|handsome, good-looking
+feo|ugly
+antiguo|old, ancient
+rico|rich, delicious
+pobre|poor
+fácil|easy
+difícil|difficult
+importante|important
+posible|possible
+imposible|impossible
+necesario|necessary
+mejor|better, best
+peor|worse, worst
+igual|equal, the same
+diferente|different
+distinto|different, distinct
+claro|clear, light
+oscuro|dark
+caliente|hot
+frío|cold
+fresco|fresh, cool
+seco|dry
+mojado|wet
+limpio|clean
+sucio|dirty
+lleno|full
+vacío|empty
+abierto|open
+cerrado|closed
+rápido|fast
+lento|slow
+fuerte|strong
+débil|weak
+duro|hard
+blando|soft
+pesado|heavy
+ligero|light (weight)
+caro|expensive
+barato|cheap
+feliz|happy
+contento|glad, content
+triste|sad
+cansado|tired
+enfermo|sick
+sano|healthy
+ocupado|busy
+libre|free
+listo|ready, clever
+tonto|silly, stupid
+inteligente|intelligent
+simpático|nice, friendly
+amable|kind
+tranquilo|calm, quiet
+nervioso|nervous
+enojado|angry
+preocupado|worried
+aburrido|bored, boring
+divertido|fun, funny
+interesante|interesting
+seguro|safe, sure
+peligroso|dangerous
+cierto|certain, true
+falso|false
+real|real, royal
+verdadero|true, real
+propio|own
+único|only, unique
+último|last
+próximo|next
+siguiente|following, next
+anterior|previous
+cercano|near, close
+lejano|far, distant
+blanco|white
+negro|black
+rojo|red
+azul|blue
+verde|green
+amarillo|yellow
+gris|gray
+marrón|brown
+rosa|pink
+morado|purple
+naranja|orange (color)
+tres|three
+cuatro|four
+cinco|five
+seis|six
+siete|seven
+ocho|eight
+nueve|nine
+diez|ten
+once|eleven
+doce|twelve
+veinte|twenty
+treinta|thirty
+cien|one hundred
+mil|one thousand
+el millón|million
+segundo|second (ordinal)
+tercero|third
+la docena|dozen
+cero|zero
+quién|who
+cuál|which
+cuánto|how much, how many
+cómo|how
+dónde|where
+cuándo|when
+por qué|why
+aquí|here
+allí|there
+ahí|there (near you)
+cerca|near
+lejos|far
+dentro|inside
+fuera|outside
+arriba|up, upstairs
+abajo|down, downstairs
+delante|in front
+detrás|behind
+encima|on top
+debajo|underneath
+todavía|still, yet
+aún|still, even
+nunca|never
+jamás|never, ever
+a veces|sometimes
+casi|almost
+quizás|maybe, perhaps
+tal vez|maybe
+pronto|soon
+tarde|late
+temprano|early
+luego|later, then
+antes|before
+mientras|while
+además|besides, also
+juntos|together
+otra vez|again
+de nuevo|again
+despacio|slowly
+rápidamente|quickly
+realmente|really
+especialmente|especially
+generalmente|generally
+normalmente|normally
+exactamente|exactly
+sobre todo|above all
+contra|against
+hacia|toward
+según|according to
+durante|during
+tras|after, behind
+alrededor|around
+aunque|although
+sino|but rather
+o|or
+todo|all, everything
+nadie|nobody
+alguien|somebody
+ninguno|none, no
+cualquier|any
+varios|several
+demasiado|too much
+bastante|enough, quite
+suficiente|enough
+ambos|both
+él|he
+nosotros|we
+ellos|they
+usted|you (formal)
+ustedes|you (plural)
+tú|you (informal)
+te|you, yourself
+le|to him, to her
+se|himself, herself, oneself
+hola|hello
+adiós|goodbye
+gracias|thank you
+por favor|please
+de nada|you're welcome
+perdón|sorry, excuse me
+lo siento|I'm sorry
+buenos días|good morning
+buenas tardes|good afternoon
+buenas noches|good night
+hasta luego|see you later
+bienvenido|welcome
+salud|cheers, bless you
+claro que sí|of course
+vale|okay (Spain)
+cuidado|careful, watch out
+felicidades|congratulations
+el mensaje|message
+el correo|mail, post office
+la página|page
+la pantalla|screen
+el internet|internet
+la red|network, net
+el móvil|cell phone (Spain)
+el celular|cell phone (Latin America)
+la aplicación|app, application
+la contraseña|password
+el archivo|file
+el dibujo|drawing
+la pintura|painting, paint
+el baile|dance
+el cine|cinema, movies
+el teatro|theater
+el concierto|concert
+la novela|novel
+el poema|poem
+el periodista|journalist
+la farmacia|pharmacy
+la panadería|bakery
+la carnicería|butcher shop
+el dentista|dentist
+la cita|appointment, date
+el horario|schedule
+el plan|plan
+la meta|goal
+el sueldo|salary
+la deuda|debt
+el impuesto|tax
+el contrato|contract
+el cliente|customer, client
+el producto|product
+la marca|brand
+la oferta|offer, sale
+la venta|sale
+la compra|purchase
+el recibo|receipt
+la tarjeta|card
+el efectivo|cash
+la moneda|coin, currency
+la calidad|quality
+la cantidad|quantity
+el peso|weight
+la medida|measure, size
+el metro|meter, subway
+el kilómetro|kilometer
+el kilo|kilogram
+el litro|liter
+la temperatura|temperature
+el clima|climate, weather
+la tormenta|storm
+el trueno|thunder
+el relámpago|lightning
+la niebla|fog
+el hielo|ice
+la ola|wave
+el desierto|desert
+la selva|jungle
+la cueva|cave
+el volcán|volcano
+el paisaje|landscape
+la naturaleza|nature
+el medio ambiente|environment
+la basura|trash, garbage
+el reciclaje|recycling
+la energía|energy
+el pato|duck
+la gallina|hen
+el gallo|rooster
+el burro|donkey
+el mono|monkey
+el tigre|tiger
+el elefante|elephant
+la jirafa|giraffe
+el lobo|wolf
+el zorro|fox
+la ballena|whale
+el tiburón|shark
+la abeja|bee
+la hormiga|ant
+la araña|spider
+la mosca|fly
+el mosquito|mosquito
+la rana|frog
+la tortuga|turtle
+el pastel|cake
+la galleta|cookie
+el chocolate|chocolate
+el helado|ice cream
+la mantequilla|butter
+el aceite|oil
+la pimienta|pepper
+la harina|flour
+el jamón|ham
+la salchicha|sausage
+los frijoles|beans
+el maíz|corn
+la zanahoria|carrot
+la lechuga|lettuce
+el pepino|cucumber
+el limón|lemon
+la uva|grape
+la piña|pineapple
+la sandía|watermelon
+el melón|melon
+la cereza|cherry
+la pera|pear
+el durazno|peach (Latin America)
+el melocotón|peach (Spain)
+la nuez|nut, walnut
+el refresco|soft drink
+la botella|bottle
+la lata|can
+la receta|recipe, prescription
+el horno|oven
+la nevera|fridge
+la estufa|stove
+el microondas|microwave
+la lavadora|washing machine
+la toalla|towel
+el jabón|soap
+el champú|shampoo
+el cepillo|brush
+la almohada|pillow
+la manta|blanket
+la sábana|bed sheet
+el armario|closet, wardrobe
+el cajón|drawer
+la alfombra|rug, carpet
+la cortina|curtain
+la planta baja|ground floor
+el piso|floor (level), apartment
+el ascensor|elevator
+el garaje|garage
+el balcón|balcony
+la piscina|swimming pool
+el tejado|roof
+la chimenea|fireplace, chimney
+el vecindario|neighborhood
+la esquina|corner
+el semáforo|traffic light
+la acera|sidewalk
+la carretera|road, highway
+el tráfico|traffic
+el accidente|accident
+la gasolina|gasoline
+la frontera|border
+el pasaporte|passport
+la aduana|customs
+el turista|tourist
+la reserva|reservation
+la llegada|arrival
+la salida|exit, departure
+la entrada|entrance, ticket
+el asiento|seat
+la vuelta|return, turn
+la izquierda|left
+la derecha|right
+recto|straight
+</script>
+<script>
+(function(){
+"use strict";
+var CFG={"id": "es", "from": "ES", "to": "EN", "kind": "word"};
+var W=[];(document.getElementById("data").textContent||"").split("\n").forEach(function(l){l=l.trim();if(!l)return;var p=l.split("|");if(p.length>=2&&p[0]&&p[1])W.push(p)});
+if(!W.length)return;
+var KEY="notomantra-flash-"+CFG.id;
+var mem={};
+function load(){try{var s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return mem[KEY]||null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){mem[KEY]=st}}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function freshDeck(){var k={};st.known.forEach(function(i){k[i]=1});var d=[];for(var i=0;i<W.length;i++)if(!k[i])d.push(i);return shuffle(d)}
+var st=load();
+if(!st||!Array.isArray(st.known)||!Array.isArray(st.deck)||st.n!==W.length){st={n:W.length,known:[],deck:[],dir:0,open:false}}
+if(!st.deck.length)st.deck=freshDeck();
+var $=function(id){return document.getElementById(id)};
+var card=$("card"),front=$("front"),back=$("back"),menu=$("menu");
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function render(){
+  $("dir").textContent=st.dir?CFG.to+" → "+CFG.from:CFG.from+" → "+CFG.to;
+  var known=st.known.length,total=W.length;
+  $("barfill").style.width=(known/total*100).toFixed(1)+"%";
+  $("count").textContent=known.toLocaleString("en-US")+" / "+total.toLocaleString("en-US")+" known";
+  card.classList.toggle("open",!!st.open);
+  if(!st.deck.length){
+    front.className="front en";front.innerHTML='<span class="done">All '+total.toLocaleString("en-US")+' marked as known.</span>';
+    back.innerHTML='<div class="sub">Tap … then Reset progress to go again.</div>';card.classList.add("open");return;
+  }
+  var w=W[st.deck[0]];
+  var f=CFG.kind;
+  if(!st.dir){
+    front.className="front"+(f==="kanji"?" big":"");
+    front.textContent=w[0];
+    back.innerHTML='<div class="meaning">'+esc(w[1])+'</div>'+extra(w);
+  }else{
+    front.className="front en";
+    front.textContent=w[1];
+    back.innerHTML='<div class="meaning native">'+esc(w[0])+'</div>'+extra(w);
+  }
+}
+function extra(w){
+  if(CFG.kind==="kanji"){
+    var h="";
+    if(w[2])h+='<div class="sub"><b>ON</b>'+esc(w[2])+'</div>';
+    if(w[3])h+='<div class="sub"><b>KUN</b>'+esc(w[3])+'</div>';
+    if(w[4])h+='<div><span class="pill">JLPT '+esc(w[4])+'</span></div>';
+    return h;
+  }
+  if(CFG.kind==="ko"&&w[2])return '<div class="sub">'+esc(w[2])+'</div>';
+  return "";
+}
+function flip(){if(menu.classList.contains("show"))return;if(!st.deck.length)return;st.open=!st.open;save();render()}
+function next(known){
+  if(!st.deck.length)return;
+  var i=st.deck.shift();
+  if(known){if(st.known.indexOf(i)<0)st.known.push(i)}
+  else{var pos=Math.min(st.deck.length,8+Math.floor(Math.random()*12));st.deck.splice(pos,0,i)}
+  st.open=false;save();render();
+}
+card.addEventListener("click",function(e){if(menu.contains(e.target))return;flip()});
+card.addEventListener("keydown",function(e){if(e.target!==card)return;if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}});
+document.addEventListener("keydown",function(e){if(menu.classList.contains("show"))return;if(e.key==="ArrowRight")next(false);if(e.key==="ArrowUp")next(true)});
+$("again").addEventListener("click",function(){next(false)});
+$("know").addEventListener("click",function(){next(true)});
+$("dir").addEventListener("click",function(){st.dir=st.dir?0:1;st.open=false;save();render()});
+$("more").addEventListener("click",function(e){e.stopPropagation();
+  $("menuinfo").textContent=st.known.length+" known, "+st.deck.length+" still in rotation. Known words are skipped until you reset.";
+  menu.classList.toggle("show")});
+$("close").addEventListener("click",function(e){e.stopPropagation();menu.classList.remove("show")});
+$("reset").addEventListener("click",function(e){e.stopPropagation();st={n:W.length,known:[],deck:[],dir:st.dir,open:false};st.deck=freshDeck();save();menu.classList.remove("show");render()});
+render();
+})();
+</script>
+</body>
+</html>
