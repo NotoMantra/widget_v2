@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today's Practice</title>
+<style>
+:root{
+  --ink:#9f6b53;
+  --ink-soft:#9f6b53;
+  --ink-faint:#b8917f;
+  --line:#9f6b53;
+  --line-soft:rgba(159,107,83,.35);
+  --hover:rgba(159,107,83,.08);
+  --on-ink:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#ba856f;
+    --ink-soft:#ba856f;
+    --ink-faint:#9c7464;
+    --line:#ba856f;
+    --line-soft:rgba(186,133,111,.38);
+    --hover:rgba(186,133,111,.10);
+    --on-ink:#191919;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+.wrap{container-type:inline-size;height:100%;min-height:230px;padding:5px}
+.w{height:100%;display:flex;flex-direction:column;gap:12px;background:transparent;border:4px solid var(--line);border-radius:22px;padding:16px 16px 14px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.title{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--ink)}
+.date{font-size:11px;letter-spacing:.04em;color:var(--ink-soft);white-space:nowrap}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+button{font:inherit;color:var(--ink);background:transparent;border:2px solid var(--line);border-radius:999px;cursor:pointer;transition:background .15s,border-color .15s,color .15s,transform .1s;-webkit-tap-highlight-color:transparent}
+button:hover{background:var(--hover)}
+button:active{transform:scale(.96)}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.chip{flex:0 0 auto;font-size:11px;font-weight:700;letter-spacing:.02em;padding:4px 11px;white-space:nowrap}
+.chip.on{background:var(--ink-soft);border-color:var(--ink-soft);color:var(--on-ink)}
+.chip .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin-left:5px;vertical-align:middle;opacity:.75}
+.card{flex:1;min-height:120px;background:transparent;border:2px solid var(--line-soft);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center;gap:9px}
+.meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.skill{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.time{font-size:11px;font-weight:700;border:2px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--ink)}
+.task{font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;font-size:clamp(17px,4.8cqi,23px);line-height:1.35;color:var(--ink);font-weight:600}
+.then{font-size:12px;color:var(--ink-soft);line-height:1.5}
+.then b{font-weight:800;color:var(--ink)}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.note{font-size:11px;color:var(--ink-faint)}
+.next{font-size:12px;font-weight:700;padding:7px 15px;display:flex;align-items:center;gap:6px}
+.next svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.fade{animation:f .25s ease}
+@keyframes f{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@container (max-width:320px){
+  .w{padding:12px;gap:10px;border-radius:18px}
+  .date{display:none}
+  .card{padding:13px}
+  .note{display:none}
+  .next{flex:1;justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="w">
+  <div class="top">
+    <div class="title">Today's Practice</div>
+    <div class="date" id="date"></div>
+  </div>
+  <div class="chips" id="chips" role="tablist" aria-label="Pick a skill"></div>
+  <div class="card" id="card" aria-live="polite">
+    <div class="meta"><span class="skill" id="skill"></span><span class="time" id="time"></span></div>
+    <div class="task" id="task"></div>
+    <div class="then" id="then"></div>
+  </div>
+  <div class="foot">
+    <div class="note">Works for any language. A new task every day.</div>
+    <button class="next" id="next"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Another task</button>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+"use strict";
+var SKILLS=[
+ {k:"Review",log:"Clear your <b>Needs Review</b> list, then log it in <b>Study Sessions</b>.",t:[
+  ["15 min","Go through every word in Needs Review. Say each one out loud before you look at the meaning."],
+  ["10 min","Reread last week's journal entries and fix any mistake you can now spot yourself."],
+  ["10 min","Pick your three most repeated mistakes. Say the correct version of each out loud five times."],
+  ["15 min","Write a five-line summary of everything you learned this week, in the language."],
+  ["10 min","Test yourself on ten words you marked Learning. Move the ones you got right to Mastered."],
+  ["10 min","Look at your goals. Pick one small thing you can finish this coming week and write it down."],
+  ["5 min","Rest day. Listen to one song in the language and just enjoy it. No notes."],
+  ["10 min","Teach an imaginary friend one grammar rule you learned this month, out loud, in plain words."],
+  ["15 min","Flip through your resources. Mark anything you have stopped using as Dropped."],
+  ["10 min","Retell a story you know well, like a fairy tale, in the language using only words you know."]
+ ]},
+ {k:"Vocabulary",log:"Add new words to <b>Vocabulary</b> with one example sentence each.",t:[
+  ["10 min","Pick one room in your home. Name ten objects in it. Look up the ones you don't know."],
+  ["10 min","Write down five words you used in your own language today and find each one in the language you're learning."],
+  ["15 min","Learn five verbs you would use on a normal workday. Write one sentence for each."],
+  ["10 min","Pick a topic you love, like football or cooking. Learn five words you would need to talk about it."],
+  ["10 min","Find three pairs of opposites, like hot and cold. Make a sentence with each pair."],
+  ["10 min","Label five things around you with sticky notes in the language."],
+  ["15 min","Learn the words for ten feelings. Use three of them to describe your day."],
+  ["10 min","Take five words you already know and find one useful phrase that uses each."],
+  ["10 min","Learn the words you would need to order food at a cafe, start to finish."],
+  ["15 min","Read the menu, label or packaging of one product in the language. Add every new word."]
+ ]},
+ {k:"Listening",log:"Log the minutes in <b>Study Sessions</b> and link the resource you used.",t:[
+  ["10 min","Listen to a short podcast clip. Write down three words you heard but don't know."],
+  ["15 min","Watch one short video with subtitles in the language, not in English."],
+  ["10 min","Play the same one-minute clip three times. Each time, write down a little more of what you hear."],
+  ["10 min","Listen to a song and try to catch the chorus. Look up the parts you missed."],
+  ["15 min","Put on a show or video in the language while you cook or clean. Note one phrase you hear often."],
+  ["10 min","Listen to a short news clip. Say in one sentence what it was about."],
+  ["10 min","Find a clip of two people talking. Count how many times you hear a word you know."],
+  ["15 min","Watch a scene you have seen before, but in the language. Notice what you understand now."],
+  ["10 min","Listen to a voice message or video from a native speaker and repeat the last sentence you heard."],
+  ["10 min","Pick a slow-paced podcast for learners and listen to one full episode without stopping."]
+ ]},
+ {k:"Grammar",log:"Add the rule to <b>Grammar</b> and link any mistakes that break it.",t:[
+  ["15 min","Pick one grammar rule you keep getting wrong. Write five sentences that use it correctly."],
+  ["10 min","Write three sentences about yesterday, three about today and three about tomorrow."],
+  ["10 min","Turn five simple sentences into questions, then into negatives."],
+  ["15 min","Learn how to say 'because', 'but' and 'so'. Join two short sentences with each."],
+  ["10 min","Pick one verb and say it with I, you, he, she, we and they."],
+  ["15 min","Find one sentence in something you read today. Work out why each word is where it is."],
+  ["10 min","Write the same sentence in polite and casual form, if your language has both."],
+  ["10 min","Learn how to compare two things, like bigger or better. Compare five pairs."],
+  ["15 min","Explain one grammar rule in one plain English line, then add one example you would actually say."],
+  ["10 min","Take one mistake from your log and write three correct sentences that avoid it."]
+ ]},
+ {k:"Speaking",log:"Log the session in <b>Study Sessions</b> and add any mistakes you noticed.",t:[
+  ["5 min","Describe your morning out loud for one minute without stopping. Then do it again."],
+  ["10 min","Shadow one short clip. Pause after each sentence and repeat it, copying the rhythm."],
+  ["10 min","Record yourself introducing yourself. Listen back and note one thing to fix."],
+  ["5 min","Talk out loud about what you see out of the nearest window."],
+  ["10 min","Pretend you are ordering at a restaurant. Say the whole conversation, both sides."],
+  ["10 min","Read one paragraph out loud slowly, then again at normal speed."],
+  ["5 min","Answer out loud: what did you eat today, and did you like it? Use full sentences."],
+  ["10 min","Explain how to make your favorite drink, step by step, out loud."],
+  ["10 min","Pick three words that are hard for you to say. Repeat each ten times, slowly, then fast."],
+  ["15 min","Book a short call with a tutor or language partner, or talk to yourself for five minutes about your week."]
+ ]},
+ {k:"Reading",log:"Log the minutes in <b>Study Sessions</b> and add new words to <b>Vocabulary</b>.",t:[
+  ["15 min","Read one short article or story for learners. Underline every word you could guess from context."],
+  ["10 min","Read the same short paragraph twice. The second time, read it out loud."],
+  ["10 min","Read five comments or posts written by native speakers on a topic you like."],
+  ["15 min","Read a page of a children's book or graded reader. Summarize it in two lines."],
+  ["10 min","Switch your phone or one app to the language for the day and read every menu you open."],
+  ["10 min","Read a recipe in the language. List the ingredients in English without looking anything up."],
+  ["15 min","Read one news headline and its first paragraph. Look up only the words that stop you."],
+  ["10 min","Read song lyrics while you listen to the song."],
+  ["10 min","Read a short text, then close it and write down every word you remember."],
+  ["15 min","Keep reading the book or course you are already using. Mark where you stopped."]
+ ]},
+ {k:"Writing",log:"Write it in <b>Journal</b> and log every correction in <b>Mistakes</b>.",t:[
+  ["10 min","Write five sentences about your weekend."],
+  ["10 min","Write a short message to a friend inviting them somewhere. Include when and where."],
+  ["15 min","Describe a person you know: what they look like and what they are like."],
+  ["10 min","Write a to-do list for tomorrow, entirely in the language."],
+  ["15 min","Write about a meal you loved. Where were you, and what made it good?"],
+  ["10 min","Write three things you are grateful for today, one sentence each."],
+  ["15 min","Write a short review of a movie, show or book you finished recently."],
+  ["10 min","Describe your home in six sentences, room by room."],
+  ["15 min","Write about a plan you have for next month and why it matters to you."],
+  ["10 min","Rewrite a journal entry from last week, fixing every mistake you can find."]
+ ]}
+];
+// Weekday rotation: Sun=Review, Mon=Vocabulary, Tue=Listening, Wed=Grammar, Thu=Speaking, Fri=Reading, Sat=Writing
+var now=new Date();
+var dayNum=Math.floor((Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()))/86400000);
+var todayIdx=now.getDay();
+var cur=todayIdx, offset=0;
+var $=function(id){return document.getElementById(id)};
+try{$("date").textContent=now.toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"})}catch(e){}
+var chips=$("chips");
+SKILLS.forEach(function(s,i){
+  var b=document.createElement("button");
+  b.className="chip";b.setAttribute("role","tab");b.type="button";
+  b.innerHTML=s.k+(i===todayIdx?'<span class="dot" title="Today"></span>':"");
+  b.addEventListener("click",function(){cur=i;offset=0;render(true)});
+  chips.appendChild(b);
+});
+function render(anim){
+  var s=SKILLS[cur], n=s.t.length;
+  var idx=((dayNum*7+cur*3+offset)%n+n)%n;
+  var t=s.t[idx];
+  [].forEach.call(chips.children,function(c,i){c.classList.toggle("on",i===cur);c.setAttribute("aria-selected",i===cur)});
+  $("skill").textContent=s.k+(cur===todayIdx?" · today":"");
+  $("time").textContent=t[0];
+  $("task").textContent=t[1];
+  $("then").innerHTML="Then: "+s.log;
+  if(anim){var c=$("card");c.classList.remove("fade");void c.offsetWidth;c.classList.add("fade")}
+  var on=chips.children[cur];
+  if(on&&on.scrollIntoView){try{on.scrollIntoView({block:"nearest",inline:"nearest"})}catch(e){}}
+}
+$("next").addEventListener("click",function(){offset++;render(true)});
+render(false);
+})();
+</script>
+</body>
+</html>
