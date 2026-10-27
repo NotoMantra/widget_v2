@@ -20,10 +20,11 @@ button{font:inherit;cursor:pointer}
 .li{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
 .li:last-child{border-bottom:0}.li b{font-size:14px}.li small{display:block;font-size:12px;color:var(--muted);margin-top:1px}
 .pill{font-size:12px;font-weight:700;color:var(--green);background:var(--track);border-radius:99px;padding:3px 10px;white-space:nowrap}
-.cd{display:flex;gap:8px}.cd input{flex:1}</style></head><body><div class="w">
-<div class="k">Coming up</div><div class="h">Next US holidays</div>
+.cd{display:flex;gap:8px}.cd input{flex:1}.cd input[type=date]{flex:0 0 150px}.mine{display:flex;justify-content:space-between;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px}.mine b{font-size:15px}.mine small{display:block;font-size:12px;color:var(--muted);margin-top:2px}.big{font-size:22px;font-weight:700;color:var(--green);text-align:right;line-height:1}.big small{font-size:11px;font-weight:600;color:var(--muted);margin-top:3px}.clr{background:none;border:0;color:var(--muted);font-size:11px;text-decoration:underline;margin-left:8px;padding:0}</style></head><body><div class="w">
+<div class="k">Coming up</div><div class="h">Next holidays</div>
+<div class="row" id="mine"></div>
 <div class="row" id="list"></div>
-<div class="row"><div class="lbl"><span>Add your own countdown</span></div><div class="cd"><input type="text" id="cn" placeholder="Mom's birthday"><input type="date" id="cdt"></div><div class="save" id="sv"></div></div>
+<div class="row"><div class="lbl"><span>Add your own countdown</span></div><div class="cd"><input type="text" id="cn" placeholder="e.g. Mom birthday"><input type="date" id="cdt"></div><div class="save"><span id="sv"></span><button class="clr" id="clr">Clear</button></div></div>
 </div><script>var S=(function(){var m={},ok=false;try{var t='__nm';localStorage.setItem(t,'1');localStorage.removeItem(t);ok=true}catch(e){}
 return{ok:ok,get:function(k,d){try{if(ok){var v=localStorage.getItem('nm_'+k);return v===null?d:JSON.parse(v)}}catch(e){}return k in m?m[k]:d},
 set:function(k,v){m[k]=v;try{if(ok)localStorage.setItem('nm_'+k,JSON.stringify(v))}catch(e){}}}})();
@@ -33,11 +34,16 @@ function key(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function fmt(d,o){return d.toLocaleDateString('en-US',o);}
 function nth(y,m,wd,n){var d=new Date(y,m,1);var off=(wd-d.getDay()+7)%7;return new Date(y,m,1+off+(n-1)*7);}
 function last(y,m,wd){var d=new Date(y,m+1,0);var off=(d.getDay()-wd+7)%7;return new Date(y,m,d.getDate()-off);}
-function hol(y){return[["New Year's Day",new Date(y,0,1)],["Martin Luther King Jr. Day",nth(y,0,1,3)],["Valentine's Day",new Date(y,1,14)],["Presidents' Day",nth(y,1,1,3)],["Mother's Day",nth(y,4,0,2)],["Memorial Day",last(y,4,1)],["Father's Day",nth(y,5,0,3)],["Juneteenth",new Date(y,5,19)],["Independence Day",new Date(y,6,4)],["Labor Day",nth(y,8,1,1)],["Halloween",new Date(y,9,31)],["Veterans Day",new Date(y,10,11)],["Thanksgiving",nth(y,10,4,4)],["Christmas Day",new Date(y,11,25)]];}
-function render(){var now=mid(new Date()),y=now.getFullYear();var all=hol(y).concat(hol(y+1));var cn=S.get('dt_name',''),cdt=S.get('dt_date','');
-if(cdt){var d=mid(new Date(cdt+'T00:00:00'));all.push([cn||'My date',d,true]);}
-var up=all.filter(function(h){return h[1]>=now}).sort(function(a,b){return a[1]-b[1]}).slice(0,4);var s='';
-up.forEach(function(h){var x=Math.round((h[1]-now)/DAY);s+='<div class="li"><div><b>'+(h[2]?'★ ':'')+h[0].replace(/</g,'&lt;')+'</b><small>'+fmt(h[1],{weekday:'short',month:'short',day:'numeric',year:'numeric'})+'</small></div><span class="pill">'+(x==0?'Today':(x==1?'Tomorrow':x+' days'))+'</span></div>'});
+function easter(y){var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;return new Date(y,mo-1,da);}
+function hol(y){return[["New Year's Day",new Date(y,0,1)],["Valentine's Day",new Date(y,1,14)],["Women's Day",new Date(y,2,8)],["Easter Sunday",easter(y)],["Earth Day",new Date(y,3,22)],["Mother's Day",nth(y,4,0,2)],["Father's Day",nth(y,5,0,3)],["Halloween",new Date(y,9,31)],["Christmas Eve",new Date(y,11,24)],["Christmas Day",new Date(y,11,25)],["New Year's Eve",new Date(y,11,31)]];}
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function pill(x){return x==0?'Today':(x==1?'Tomorrow':x+' days');}
+function render(){var now=mid(new Date()),y=now.getFullYear();var cn=S.get('dt_name',''),cdt=S.get('dt_date','');var m=document.getElementById('mine');
+if(cdt){var p=cdt.split('-');var d=new Date(+p[0],+p[1]-1,+p[2]);var rolled=false;if(d<now){d=new Date(y,+p[1]-1,+p[2]);if(d<now)d=new Date(y+1,+p[1]-1,+p[2]);rolled=true;}
+var x=Math.round((d-now)/DAY);m.style.display='block';m.innerHTML='<div class="mine"><div><b>'+esc(cn||'My date')+'</b><small>'+fmt(d,{weekday:'short',month:'short',day:'numeric',year:'numeric'})+(rolled?' · every year':'')+'</small></div><div class="big">'+(x==0?'Today':x)+(x==0?'':'<small>'+(x==1?'day':'days')+' to go</small>')+'</div></div>';}
+else{m.style.display='none';m.innerHTML='';}
+var up=hol(y).concat(hol(y+1)).filter(function(h){return h[1]>=now}).sort(function(a,b){return a[1]-b[1]}).slice(0,4);var s='';
+up.forEach(function(h){var x=Math.round((h[1]-now)/DAY);s+='<div class="li"><div><b>'+esc(h[0])+'</b><small>'+fmt(h[1],{weekday:'short',month:'short',day:'numeric',year:'numeric'})+'</small></div><span class="pill">'+pill(x)+'</span></div>'});
 document.getElementById('list').innerHTML=s;}
 var cn=document.getElementById('cn'),cdt=document.getElementById('cdt');cn.value=S.get('dt_name','');cdt.value=S.get('dt_date','');
-cn.oninput=function(){S.set('dt_name',cn.value);render()};cdt.onchange=function(){S.set('dt_date',cdt.value);render()};render();saveNote('sv');</script></body></html>
+cn.oninput=function(){S.set('dt_name',cn.value);render()};cdt.oninput=cdt.onchange=function(){S.set('dt_date',cdt.value);render()};document.getElementById('clr').onclick=function(){cn.value='';cdt.value='';S.set('dt_name','');S.set('dt_date','');render()};render();saveNote('sv');</script></body></html>
