@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Habits Widget</title>
+<style>:root{--bg:#ffffff;--ink:#37352f;--muted:#787774;--line:#e9e9e7;--green:#448361;--track:#edf3ec;--soft:#f6f9f6}
+@media (prefers-color-scheme: dark){:root{--bg:#191919;--ink:#e6e6e5;--muted:#9b9a97;--line:#2f2f2f;--green:#4dab9a;--track:#22332b;--soft:#1f2723}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+.w{padding:14px 16px;max-width:460px}
+.k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);font-weight:700}
+.h{font-size:24px;font-weight:700;line-height:1.15;margin-top:2px}
+.row{margin-top:14px}
+.lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
+.lbl b{color:var(--ink);font-weight:600}
+.bar{height:8px;border-radius:99px;background:var(--track);overflow:hidden}
+.fill{height:100%;background:var(--green);border-radius:99px}
+.foot{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+input[type=text],input[type=date]{width:100%;font:inherit;font-size:14px;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none}
+input:focus{border-color:var(--green)}
+button{font:inherit;cursor:pointer}
+.save{font-size:11px;color:var(--muted);margin-top:6px}
+.glasses{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.g{width:30px;height:38px;border:2px solid var(--green);border-radius:4px 4px 9px 9px;background:transparent;position:relative;overflow:hidden;padding:0}
+.g.on::after{content:"";position:absolute;left:0;right:0;bottom:0;height:75%;background:var(--green);opacity:.85}
+.br{display:flex;align-items:center;gap:14px;margin-top:8px}
+.circle{width:58px;height:58px;border-radius:50%;background:var(--track);display:flex;align-items:center;justify-content:center;transition:transform 4s ease-in-out}
+.circle span{width:22px;height:22px;border-radius:50%;background:var(--green)}
+.btn{border:1px solid var(--green);background:transparent;color:var(--green);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600}
+.msg{font-size:13px;color:var(--muted)}</style></head><body><div class="w">
+<div class="k">Habits</div><div class="h">Water today <span id="wc" style="color:var(--green)"></span></div>
+<div class="glasses" id="gl"></div><div class="save" id="sv"></div>
+<div class="row"><div class="lbl"><span>One minute of calm</span></div><div class="br"><div class="circle" id="ci"><span></span></div><div><button class="btn" id="go">Start</button><div class="msg" id="bm">Breathe in 4s, out 4s.</div></div></div></div>
+</div><script>var S=(function(){var m={},ok=false;try{var t='__nm';localStorage.setItem(t,'1');localStorage.removeItem(t);ok=true}catch(e){}
+return{ok:ok,get:function(k,d){try{if(ok){var v=localStorage.getItem('nm_'+k);return v===null?d:JSON.parse(v)}}catch(e){}return k in m?m[k]:d},
+set:function(k,v){m[k]=v;try{if(ok)localStorage.setItem('nm_'+k,JSON.stringify(v))}catch(e){}}}})();
+function saveNote(id){var n=document.getElementById(id);if(n)n.textContent=S.ok?'Saved on this device.':'Not saved here. Your browser blocks storage in embeds.';}
+var DAY=86400000;function mid(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+function key(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function fmt(d,o){return d.toLocaleDateString('en-US',o);}
+var k='water_'+key(mid(new Date()));function draw(){var n=S.get(k,0),s='';for(var i=0;i<8;i++)s+='<button class="g'+(i<n?' on':'')+'" data-i="'+i+'" aria-label="glass '+(i+1)+'"></button>';
+document.getElementById('gl').innerHTML=s;document.getElementById('wc').textContent=n+' of 8';
+Array.prototype.forEach.call(document.querySelectorAll('.g'),function(b){b.onclick=function(){var i=+b.dataset.i;S.set(k,i<n&&i==n-1?i:i+1);n=S.get(k,0);draw()}});}
+draw();saveNote('sv');
+var run=null;document.getElementById('go').onclick=function(){var b=this,c=document.getElementById('ci'),m=document.getElementById('bm');
+if(run){clearInterval(run);run=null;c.style.transform='scale(1)';b.textContent='Start';m.textContent='Breathe in 4s, out 4s.';return;}
+var t=0,inh=true;b.textContent='Stop';function step(){c.style.transform=inh?'scale(1.35)':'scale(1)';m.textContent=(inh?'Breathe in':'Breathe out')+' · '+(60-t)+'s';inh=!inh;}
+step();run=setInterval(function(){t+=4;if(t>=60){clearInterval(run);run=null;c.style.transform='scale(1)';b.textContent='Again';m.textContent='Nice. One minute done.';return;}step();},4000);};</script></body></html>

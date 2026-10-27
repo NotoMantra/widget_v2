@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planner Widget</title>
+<style>
+  :root{--bg:#ffffff;--ink:#37352f;--muted:#787774;--line:#e9e9e7;--green:#448361;--track:#edf3ec}
+  @media (prefers-color-scheme: dark){:root{--bg:#191919;--ink:#e6e6e5;--muted:#9b9a97;--line:#2f2f2f;--green:#4dab9a;--track:#22332b}}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+  .w{padding:14px 16px;max-width:420px}
+  .dow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);font-weight:700}
+  .date{font-size:26px;font-weight:700;line-height:1.15;margin-top:2px}
+  .row{margin-top:14px}
+  .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .lbl b{color:var(--ink);font-weight:600}
+  .bar{height:8px;border-radius:99px;background:var(--track);overflow:hidden}
+  .fill{height:100%;background:var(--green);border-radius:99px;width:0}
+  .foot{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="dow" id="dow"></div>
+  <div class="date" id="date"></div>
+  <div class="row">
+    <div class="lbl"><span id="yl"></span><b id="yp"></b></div>
+    <div class="bar"><div class="fill" id="yf"></div></div>
+  </div>
+  <div class="row">
+    <div class="lbl"><span id="ml"></span><b id="tp"></b></div>
+    <div class="bar"><div class="fill" id="tf"></div></div>
+  </div>
+  <div class="foot" id="foot"></div>
+</div>
+<script>
+(function(){
+  var DAY=86400000;
+  function mid(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+  function render(){
+    var now=mid(new Date()), y=now.getFullYear();
+    var ys=new Date(y,0,1), ye=new Date(y+1,0,1);
+    var yearDays=Math.round((ye-ys)/DAY), dayNum=Math.round((now-ys)/DAY)+1;
+    var yPct=Math.round(dayNum/yearDays*100);
+    var ms=new Date(y,now.getMonth(),1), me=new Date(y,now.getMonth()+1,1);
+    var mDays=Math.round((me-ms)/DAY), mNum=now.getDate();
+    var tPct=Math.round(mNum/mDays*100);
+    document.getElementById('dow').textContent=now.toLocaleDateString('en-US',{weekday:'long'});
+    document.getElementById('date').textContent=now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    document.getElementById('yl').textContent=y+' progress, day '+dayNum+' of '+yearDays;
+    document.getElementById('yp').textContent=yPct+'%';
+    document.getElementById('yf').style.width=yPct+'%';
+    document.getElementById('ml').textContent=now.toLocaleDateString('en-US',{month:'long'})+', day '+mNum+' of '+mDays;
+    document.getElementById('tp').textContent=tPct+'%';
+    document.getElementById('tf').style.width=tPct+'%';
+    var left=yearDays-dayNum, f;
+    if(y<2027){f=Math.round((new Date(2027,0,1)-now)/DAY)+' days until 2027 begins.';}
+    else{f=left+' days left in '+y+'. Make today count.';}
+    document.getElementById('foot').textContent=f;
+  }
+  render();
+  var n=new Date(), next=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1)-n+1000;
+  setTimeout(function(){render();setInterval(render,DAY);},next);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Calendar Widget</title>
+<style>:root{--bg:#ffffff;--ink:#37352f;--muted:#787774;--line:#e9e9e7;--green:#448361;--track:#edf3ec;--soft:#f6f9f6}
+@media (prefers-color-scheme: dark){:root{--bg:#191919;--ink:#e6e6e5;--muted:#9b9a97;--line:#2f2f2f;--green:#4dab9a;--track:#22332b;--soft:#1f2723}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+.w{padding:14px 16px;max-width:460px}
+.k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);font-weight:700}
+.h{font-size:24px;font-weight:700;line-height:1.15;margin-top:2px}
+.row{margin-top:14px}
+.lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
+.lbl b{color:var(--ink);font-weight:600}
+.bar{height:8px;border-radius:99px;background:var(--track);overflow:hidden}
+.fill{height:100%;background:var(--green);border-radius:99px}
+.foot{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+input[type=text],input[type=date]{width:100%;font:inherit;font-size:14px;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none}
+input:focus{border-color:var(--green)}
+button{font:inherit;cursor:pointer}
+.save{font-size:11px;color:var(--muted);margin-top:6px}
+.top{display:flex;align-items:center;justify-content:space-between}
+.nav button{border:1px solid var(--line);background:var(--soft);color:var(--ink);width:28px;height:28px;border-radius:8px;font-size:14px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;text-align:center}
+.cal .n{font-size:10px;color:var(--muted);text-transform:uppercase;padding-bottom:2px}
+.cal .c{font-size:13px;padding:6px 0;border-radius:8px}
+.cal .c.o{color:var(--muted);opacity:.4}.cal .c.t{background:var(--green);color:#fff;font-weight:700}.cal .c.x{outline:2px solid var(--green);outline-offset:-2px}
+.cd{display:flex;gap:8px;margin-top:8px}.cd input{flex:1}
+.big{font-size:22px;font-weight:700;color:var(--green);margin-top:8px}</style></head><body><div class="w">
+<div class="top"><div><div class="k">Calendar</div><div class="h" id="mt"></div></div><div class="nav"><button id="pv">‹</button> <button id="tt">•</button> <button id="nx">›</button></div></div>
+<div class="cal" id="cal"></div>
+<div class="row"><div class="lbl"><span>Count down to</span></div><div class="cd"><input type="text" id="cn" placeholder="Vacation"><input type="date" id="cdt"></div><div class="big" id="out"></div><div class="save" id="sv"></div></div>
+</div><script>var S=(function(){var m={},ok=false;try{var t='__nm';localStorage.setItem(t,'1');localStorage.removeItem(t);ok=true}catch(e){}
+return{ok:ok,get:function(k,d){try{if(ok){var v=localStorage.getItem('nm_'+k);return v===null?d:JSON.parse(v)}}catch(e){}return k in m?m[k]:d},
+set:function(k,v){m[k]=v;try{if(ok)localStorage.setItem('nm_'+k,JSON.stringify(v))}catch(e){}}}})();
+function saveNote(id){var n=document.getElementById(id);if(n)n.textContent=S.ok?'Saved on this device.':'Not saved here. Your browser blocks storage in embeds.';}
+var DAY=86400000;function mid(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+function key(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function fmt(d,o){return d.toLocaleDateString('en-US',o);}
+var off=0;function draw(){var now=mid(new Date());var m=new Date(now.getFullYear(),now.getMonth()+off,1);
+document.getElementById('mt').textContent=fmt(m,{month:'long',year:'numeric'});
+var t=S.get('cd_date','');var tx=t?mid(new Date(t+'T00:00:00')):null;
+var s='';['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(function(n){s+='<div class="n">'+n+'</div>'});
+var start=new Date(m.getTime()-m.getDay()*DAY);for(var i=0;i<42;i++){var d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
+var c='c';if(d.getMonth()!=m.getMonth())c+=' o';if(+d==+now)c+=' t';else if(tx&&+d==+tx)c+=' x';s+='<div class="'+c+'">'+d.getDate()+'</div>';}
+document.getElementById('cal').innerHTML=s;}
+function cd(){var n=S.get('cd_name',''),t=S.get('cd_date','');var o=document.getElementById('out');if(!t){o.textContent='Pick a date to start a countdown.';o.style.fontSize='13px';o.style.color='';return;}
+o.style.fontSize='';o.style.color='';var now=mid(new Date()),d=mid(new Date(t+'T00:00:00'));var x=Math.round((d-now)/DAY);var nm=n||'Your date';
+o.textContent=x>1?x+' days until '+nm:(x==1?'Tomorrow: '+nm:(x==0?'Today: '+nm:nm+' was '+(-x)+' days ago'));}
+var cn=document.getElementById('cn'),cdt=document.getElementById('cdt');cn.value=S.get('cd_name','');cdt.value=S.get('cd_date','');
+cn.oninput=function(){S.set('cd_name',cn.value);cd()};cdt.onchange=function(){S.set('cd_date',cdt.value);cd();draw()};
+document.getElementById('pv').onclick=function(){off--;draw()};document.getElementById('nx').onclick=function(){off++;draw()};document.getElementById('tt').onclick=function(){off=0;draw()};
+draw();cd();saveNote('sv');</script></body></html>

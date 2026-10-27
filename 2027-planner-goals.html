@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Goals Widget</title>
+<style>:root{--bg:#ffffff;--ink:#37352f;--muted:#787774;--line:#e9e9e7;--green:#448361;--track:#edf3ec;--soft:#f6f9f6}
+@media (prefers-color-scheme: dark){:root{--bg:#191919;--ink:#e6e6e5;--muted:#9b9a97;--line:#2f2f2f;--green:#4dab9a;--track:#22332b;--soft:#1f2723}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+.w{padding:14px 16px;max-width:460px}
+.k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);font-weight:700}
+.h{font-size:24px;font-weight:700;line-height:1.15;margin-top:2px}
+.row{margin-top:14px}
+.lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
+.lbl b{color:var(--ink);font-weight:600}
+.bar{height:8px;border-radius:99px;background:var(--track);overflow:hidden}
+.fill{height:100%;background:var(--green);border-radius:99px}
+.foot{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+input[type=text],input[type=date]{width:100%;font:inherit;font-size:14px;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none}
+input:focus{border-color:var(--green)}
+button{font:inherit;cursor:pointer}
+.save{font-size:11px;color:var(--muted);margin-top:6px}
+.q{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.q div{background:var(--track);border-radius:8px;height:34px;position:relative;overflow:hidden}
+.q div i{position:absolute;left:0;top:0;bottom:0;background:var(--green)}
+.q div b{position:relative;display:block;text-align:center;line-height:34px;font-size:12px;font-weight:700;color:var(--ink);mix-blend-mode:normal}
+.word{font-size:26px;font-weight:800;color:var(--green);margin-top:4px;min-height:32px}</style></head><body><div class="w">
+<div class="k">Goals</div><div class="h" id="h"></div>
+<div class="row"><div class="lbl"><span id="ql"></span><b id="qd"></b></div><div class="q" id="q"></div></div>
+<div class="row"><div class="lbl"><span>My word for the year</span></div><input type="text" id="wd" maxlength="24" placeholder="e.g. Steady"><div class="save" id="sv"></div></div>
+<div class="foot" id="foot"></div>
+</div><script>var S=(function(){var m={},ok=false;try{var t='__nm';localStorage.setItem(t,'1');localStorage.removeItem(t);ok=true}catch(e){}
+return{ok:ok,get:function(k,d){try{if(ok){var v=localStorage.getItem('nm_'+k);return v===null?d:JSON.parse(v)}}catch(e){}return k in m?m[k]:d},
+set:function(k,v){m[k]=v;try{if(ok)localStorage.setItem('nm_'+k,JSON.stringify(v))}catch(e){}}}})();
+function saveNote(id){var n=document.getElementById(id);if(n)n.textContent=S.ok?'Saved on this device.':'Not saved here. Your browser blocks storage in embeds.';}
+var DAY=86400000;function mid(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+function key(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function fmt(d,o){return d.toLocaleDateString('en-US',o);}
+function render(){var now=mid(new Date()),y=now.getFullYear(),qi=Math.floor(now.getMonth()/3);
+document.getElementById('h').textContent='Q'+(qi+1)+' of '+y;var s='';
+for(var i=0;i<4;i++){var a=new Date(y,i*3,1),b=new Date(y,i*3+3,1);var p=now>=b?100:(now<a?0:Math.round((now-a)/(b-a)*100));s+='<div><i style="width:'+p+'%"></i><b style="color:'+(p>=50?'#fff':'')+'">Q'+(i+1)+'</b></div>';}
+document.getElementById('q').innerHTML=s;var qe=new Date(y,qi*3+3,1);document.getElementById('ql').textContent='Quarters this year';document.getElementById('qd').textContent=Math.round((qe-now)/DAY)+' days left in Q'+(qi+1);
+var st=new Date(2027,0,1),end=new Date(2028,0,1),left=Math.round((end-now)/DAY);document.getElementById('foot').textContent=now<st?Math.round((st-now)/DAY)+' days until 2027 begins. Set your goals now.':(left>0?left+' days left in 2027. Plenty of time, none to waste.':'2027 is done. Time to set your 2028 goals.');
+var w=document.getElementById('wd'),k='word_'+y;w.value=S.get(k,'');w.oninput=function(){S.set(k,w.value)};}
+render();saveNote('sv');</script></body></html>

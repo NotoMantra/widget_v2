@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dates Widget</title>
+<style>:root{--bg:#ffffff;--ink:#37352f;--muted:#787774;--line:#e9e9e7;--green:#448361;--track:#edf3ec;--soft:#f6f9f6}
+@media (prefers-color-scheme: dark){:root{--bg:#191919;--ink:#e6e6e5;--muted:#9b9a97;--line:#2f2f2f;--green:#4dab9a;--track:#22332b;--soft:#1f2723}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+.w{padding:14px 16px;max-width:460px}
+.k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);font-weight:700}
+.h{font-size:24px;font-weight:700;line-height:1.15;margin-top:2px}
+.row{margin-top:14px}
+.lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
+.lbl b{color:var(--ink);font-weight:600}
+.bar{height:8px;border-radius:99px;background:var(--track);overflow:hidden}
+.fill{height:100%;background:var(--green);border-radius:99px}
+.foot{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+input[type=text],input[type=date]{width:100%;font:inherit;font-size:14px;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none}
+input:focus{border-color:var(--green)}
+button{font:inherit;cursor:pointer}
+.save{font-size:11px;color:var(--muted);margin-top:6px}
+.li{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}.li b{font-size:14px}.li small{display:block;font-size:12px;color:var(--muted);margin-top:1px}
+.pill{font-size:12px;font-weight:700;color:var(--green);background:var(--track);border-radius:99px;padding:3px 10px;white-space:nowrap}
+.cd{display:flex;gap:8px}.cd input{flex:1}</style></head><body><div class="w">
+<div class="k">Coming up</div><div class="h">Next US holidays</div>
+<div class="row" id="list"></div>
+<div class="row"><div class="lbl"><span>Add your own countdown</span></div><div class="cd"><input type="text" id="cn" placeholder="Mom's birthday"><input type="date" id="cdt"></div><div class="save" id="sv"></div></div>
+</div><script>var S=(function(){var m={},ok=false;try{var t='__nm';localStorage.setItem(t,'1');localStorage.removeItem(t);ok=true}catch(e){}
+return{ok:ok,get:function(k,d){try{if(ok){var v=localStorage.getItem('nm_'+k);return v===null?d:JSON.parse(v)}}catch(e){}return k in m?m[k]:d},
+set:function(k,v){m[k]=v;try{if(ok)localStorage.setItem('nm_'+k,JSON.stringify(v))}catch(e){}}}})();
+function saveNote(id){var n=document.getElementById(id);if(n)n.textContent=S.ok?'Saved on this device.':'Not saved here. Your browser blocks storage in embeds.';}
+var DAY=86400000;function mid(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+function key(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function fmt(d,o){return d.toLocaleDateString('en-US',o);}
+function nth(y,m,wd,n){var d=new Date(y,m,1);var off=(wd-d.getDay()+7)%7;return new Date(y,m,1+off+(n-1)*7);}
+function last(y,m,wd){var d=new Date(y,m+1,0);var off=(d.getDay()-wd+7)%7;return new Date(y,m,d.getDate()-off);}
+function hol(y){return[["New Year's Day",new Date(y,0,1)],["Martin Luther King Jr. Day",nth(y,0,1,3)],["Valentine's Day",new Date(y,1,14)],["Presidents' Day",nth(y,1,1,3)],["Mother's Day",nth(y,4,0,2)],["Memorial Day",last(y,4,1)],["Father's Day",nth(y,5,0,3)],["Juneteenth",new Date(y,5,19)],["Independence Day",new Date(y,6,4)],["Labor Day",nth(y,8,1,1)],["Halloween",new Date(y,9,31)],["Veterans Day",new Date(y,10,11)],["Thanksgiving",nth(y,10,4,4)],["Christmas Day",new Date(y,11,25)]];}
+function render(){var now=mid(new Date()),y=now.getFullYear();var all=hol(y).concat(hol(y+1));var cn=S.get('dt_name',''),cdt=S.get('dt_date','');
+if(cdt){var d=mid(new Date(cdt+'T00:00:00'));all.push([cn||'My date',d,true]);}
+var up=all.filter(function(h){return h[1]>=now}).sort(function(a,b){return a[1]-b[1]}).slice(0,4);var s='';
+up.forEach(function(h){var x=Math.round((h[1]-now)/DAY);s+='<div class="li"><div><b>'+(h[2]?'★ ':'')+h[0].replace(/</g,'&lt;')+'</b><small>'+fmt(h[1],{weekday:'short',month:'short',day:'numeric',year:'numeric'})+'</small></div><span class="pill">'+(x==0?'Today':(x==1?'Tomorrow':x+' days'))+'</span></div>'});
+document.getElementById('list').innerHTML=s;}
+var cn=document.getElementById('cn'),cdt=document.getElementById('cdt');cn.value=S.get('dt_name','');cdt.value=S.get('dt_date','');
+cn.oninput=function(){S.set('dt_name',cn.value);render()};cdt.onchange=function(){S.set('dt_date',cdt.value);render()};render();saveNote('sv');</script></body></html>
